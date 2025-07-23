@@ -5,7 +5,6 @@ import ViewSwitcher from "./components/ViewSwitcher";
 import { fetchOrderBook } from "./services/binanceservice";
 import { Container, Typography } from "@mui/material";
 import SymbolFilter from "./components/symbolFilter";
-import dayjs from "dayjs";
 
 function App() {
   const [view, setView] = useState("monthly");
@@ -18,15 +17,34 @@ function App() {
   useEffect(() => {
     const getData = async () => {
       const book = await fetchOrderBook(symbol);
-      const today = new Date().toISOString().split("T")[0];
+      const newData = {};
 
-      setVolatilityData({
-        [today]: {
+      // Generate dummy volatility and volume for past 30 days
+      for (let i = 0; i < 30; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split("T")[0];
+
+        newData[dateStr] = {
           volatility: Math.random().toFixed(2),
           volume: Math.floor(Math.random() * 10000),
-        },
-      });
+        };
+      }
 
+      const generatedData = {};
+      for (let i = 0; i < 100; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split("T")[0];
+        generatedData[dateStr] = {
+          volatility: Math.random().toFixed(2),
+          volume: Math.floor(Math.random() * 10000),
+        };
+      }
+      setVolatilityData(generatedData);
+
+      // Set selectedDateData for today
+      const today = new Date().toISOString().split("T")[0];
       setSelectedDateData({
         timestamps: ["10:00", "11:00", "12:00"],
         prices: [book?.bids?.[0]?.[0] || 30000, 30500, 30200],
@@ -36,25 +54,21 @@ function App() {
     getData();
   }, [symbol]);
 
-  const handleRangeSelect = (date) => {
-    if (!range.start || (range.start && range.end)) {
-      setRange({ start: date, end: null });
-    } else {
-      const start = dayjs(range.start);
-      const end = dayjs(date);
-      if (end.isBefore(start)) {
-        setRange({ start: date, end: range.start });
-      } else {
-        setRange((prev) => ({ ...prev, end: date }));
-      }
-    }
-  };
+  const handleDateSelect = (date) => {
+    if (selectedDate === date) return; // 👈 Skip if same date
 
-  const handleDateClick = (date) => {
-    handleRangeSelect(date);
     setSelectedDate(date);
 
-    // Simulate selected day data
+    // Range selection logic
+    setRange((prev) => {
+      if (!prev.start || (prev.start && prev.end)) {
+        return { start: date, end: null };
+      } else {
+        return { start: prev.start, end: date };
+      }
+    });
+
+    // Simulate chart data
     setSelectedDateData({
       timestamps: ["10:00", "11:00", "12:00"],
       prices: [
@@ -77,7 +91,7 @@ function App() {
       <CalendarView
         data={volatilityData}
         view={view}
-        onDateSelect={handleDateClick}
+        onDateSelect={handleDateSelect}
         range={range}
       />
 

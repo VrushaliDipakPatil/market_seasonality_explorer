@@ -1,6 +1,6 @@
 import React from 'react';
+import { Card, CardContent, Typography } from '@mui/material';
 import { Line } from 'react-chartjs-2';
-import { Box, Typography } from '@mui/material';
 
 const DashboardPanel = ({ selectedDateData }) => {
   if (!selectedDateData) return null;
@@ -11,17 +11,19 @@ const DashboardPanel = ({ selectedDateData }) => {
       {
         label: 'Price',
         data: selectedDateData.prices,
-        borderColor: 'green',
+        borderColor: 'blue',
         fill: false,
       },
     ],
   };
 
   return (
-    <Box mt={2}>
-      <Typography variant="h6">Details</Typography>
-      <Line data={chartData} />
-    </Box>
+    <Card sx={{ mt: 3 }}>
+      <CardContent>
+        <Typography variant="h6">Intraday Price Chart</Typography>
+        <Line data={chartData} />
+      </CardContent>
+    </Card>
   );
 };
 
