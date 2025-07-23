@@ -1,99 +1,99 @@
-import React from "react";
-import { Grid, Paper, Typography, Tooltip } from "@mui/material";
-import dayjs from "dayjs";
+import React from 'react';
+import { Grid, Paper, Typography, Tooltip } from '@mui/material';
+import dayjs from 'dayjs';
 
-const CalendarView = ({ data, view, onDateSelect, range }) => {
-  const today = dayjs().format("YYYY-MM-DD");
+const CalendarView = ({ data, view, onDateSelect }) => {
+  const today = new Date().toISOString().split('T')[0];
 
   const generateDates = () => {
-    if (view === "daily") {
-      return Array.from({ length: 30 }, (_, i) =>
-        dayjs().subtract(29 - i, "day").format("YYYY-MM-DD")
-      );
-    } else if (view === "weekly") {
-      return Array.from({ length: 15 }, (_, i) => {
-        const startOfWeek = dayjs().subtract((14 - i) * 7, "day");
-        const endOfWeek = startOfWeek.add(6, "day");
+    const dates = [];
 
-        // Aggregate data
-        let totalVolatility = 0;
-        let totalVolume = 0;
-        let count = 0;
+    if (view === 'daily') {
+      for (let i = 29; i >= 0; i--) {
+        const date = dayjs().subtract(i, 'day').format('YYYY-MM-DD');
+        dates.push(date);
+      }
+    } else if (view === 'weekly') {
+      for (let i = 14; i >= 0; i--) {
+        const startOfWeek = dayjs().subtract(i * 7, 'day');
+        const weekDates = Array.from({ length: 7 }, (_, j) => startOfWeek.add(j, 'day').format('YYYY-MM-DD'));
+        dates.push(weekDates);
+      }
+    } else if (view === 'monthly') {
+      for (let i = 11; i >= 0; i--) {
+        const month = dayjs().subtract(i, 'month').format('YYYY-MM');
+        const daysInMonth = dayjs(month + '-01').daysInMonth();
+        const monthDates = Array.from({ length: daysInMonth }, (_, j) => dayjs(month + '-01').add(j, 'day').format('YYYY-MM-DD'));
+        dates.push({ month, dates: monthDates });
+      }
+    }
 
-        for (let d = 0; d < 7; d++) {
-          const date = startOfWeek.add(d, "day").format("YYYY-MM-DD");
-          if (data[date]) {
-            totalVolatility += parseFloat(data[date].volatility);
-            totalVolume += parseFloat(data[date].volume);
-            count++;
+    return dates;
+  };
+
+  const computeMetrics = (dateGroup) => {
+    if (typeof dateGroup === 'string') {
+      const metrics = data[dateGroup];
+      return metrics
+        ? {
+            volatility: metrics.volatility,
+            volume: metrics.volume,
+            label: dateGroup,
           }
-        }
-
-        const avgVolatility = count ? (totalVolatility / count).toFixed(2) : null;
-        const avgVolume = count ? Math.floor(totalVolume / count) : null;
-
-        return {
-          label: `${startOfWeek.format("MMM D")} - ${endOfWeek.format("MMM D")}`,
-          date: startOfWeek.format("YYYY-MM-DD"),
-          metrics: count
-            ? {
-                volatility: avgVolatility,
-                volume: avgVolume,
-              }
-            : null,
-        };
-      });
-    } else {
-      // monthly fallback - last 40 days
-      return Array.from({ length: 40 }, (_, i) =>
-        dayjs().subtract(39 - i, "day").format("YYYY-MM-DD")
+        : null;
+    } else if (Array.isArray(dateGroup)) {
+      const valid = dateGroup.filter((d) => data[d]);
+      if (!valid.length) return null;
+      const avgVol = (
+        valid.reduce((sum, d) => sum + (data[d]?.volatility || 0), 0) / valid.length
+      ).toFixed(2);
+      const avgVolu = Math.round(
+        valid.reduce((sum, d) => sum + (data[d]?.volume || 0), 0) / valid.length
       );
+      return {
+        volatility: avgVol,
+        volume: avgVolu,
+        label: dayjs(valid[0]).format('MMM D') + ' - ' + dayjs(valid[valid.length - 1]).format('MMM D'),
+      };
+    } else if (typeof dateGroup === 'object' && dateGroup.month) {
+      const valid = dateGroup.dates.filter((d) => data[d]);
+      if (!valid.length) return null;
+      const avgVol = (
+        valid.reduce((sum, d) => sum + (data[d]?.volatility || 0), 0) / valid.length
+      ).toFixed(2);
+      const avgVolu = Math.round(
+        valid.reduce((sum, d) => sum + (data[d]?.volume || 0), 0) / valid.length
+      );
+      return {
+        volatility: avgVol,
+        volume: avgVolu,
+        label: dateGroup.month,
+      };
     }
   };
 
-  const dates = generateDates();
+  const dateGroups = generateDates();
 
   return (
     <Grid container spacing={1} mt={2}>
-      {dates.map((entry, index) => {
-        const isWeekly = view === "weekly";
-        const dateStr = isWeekly ? entry.date : entry;
-        const label = isWeekly ? entry.label : dateStr;
-        const metrics = isWeekly ? entry.metrics : data[dateStr];
-        const isToday = dateStr === today;
+      {dateGroups.map((group, index) => {
+        const metrics = computeMetrics(group);
+        if (!metrics) return null;
 
-        const isInRange =
-          range?.start &&
-          range?.end &&
-          dayjs(dateStr).isAfter(dayjs(range.start).subtract(1, "day")) &&
-          dayjs(dateStr).isBefore(dayjs(range.end).add(1, "day"));
-
-        const backgroundColor = metrics
-          ? metrics.volatility < 0.3
-            ? "#C8E6C9"
-            : metrics.volatility < 0.6
-            ? "#FFECB3"
-            : "#FFCDD2"
-          : "#F5F5F5";
+        const backgroundColor = metrics.volatility < 0.3
+          ? '#C8E6C9'
+          : metrics.volatility < 0.6
+          ? '#FFECB3'
+          : '#FFCDD2';
 
         return (
-          <Grid
-            item
-            xs={view === "daily" ? 3 : view === "weekly" ? 4 : 2}
-            key={dateStr + index}
-          >
+          <Grid item xs={view === 'daily' ? 3 : view === 'weekly' ? 2 : 2} key={index}>
             <Tooltip
               title={
                 <div>
-                  <div>
-                    <strong>{isWeekly ? "Week:" : "Date:"}</strong> {label}
-                  </div>
-                  <div>
-                    <strong>Volatility:</strong> {metrics?.volatility ?? "N/A"}
-                  </div>
-                  <div>
-                    <strong>Volume:</strong> {metrics?.volume ?? "N/A"}
-                  </div>
+                  <div><strong>{metrics.label}</strong></div>
+                  <div><strong>Volatility:</strong> {metrics.volatility}</div>
+                  <div><strong>Volume:</strong> {metrics.volume}</div>
                 </div>
               }
               arrow
@@ -101,23 +101,29 @@ const CalendarView = ({ data, view, onDateSelect, range }) => {
             >
               <Paper
                 sx={{
-                  backgroundColor: isInRange ? "#e3f2fd" : backgroundColor,
+                  backgroundColor,
                   height: 80,
                   padding: 1,
-                  cursor: "pointer",
-                  border: isToday ? "2px solid black" : "1px solid #ccc",
-                  "&:hover": { opacity: 0.85 },
+                  cursor: 'pointer',
+                  border: '1px solid #ccc',
+                  '&:hover': { opacity: 0.85 },
                 }}
-                onClick={() => onDateSelect(dateStr)}
+                onClick={() => {
+                  if (typeof group === 'string') {
+                    onDateSelect(group);
+                  } else if (Array.isArray(group)) {
+                    onDateSelect(group[0]);
+                  } else if (typeof group === 'object' && group.dates?.length) {
+                    onDateSelect(group.dates[0]);
+                  }
+                }}
               >
-                <Typography variant="caption">
-                  {view === "weekly" ? label : dateStr}
+                <Typography variant="caption">{metrics.label}</Typography>
+                <Typography variant="body2">
+                  Vol: {metrics.volatility}
                 </Typography>
                 <Typography variant="body2">
-                  Vol: {metrics?.volatility ?? "--"}
-                </Typography>
-                <Typography variant="body2">
-                  Volu: {metrics?.volume ?? "--"}
+                  Volu: {metrics.volume}
                 </Typography>
               </Paper>
             </Tooltip>

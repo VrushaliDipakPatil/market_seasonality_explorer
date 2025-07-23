@@ -14,45 +14,38 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [range, setRange] = useState({ start: null, end: null });
 
-  useEffect(() => {
-    const getData = async () => {
-      const book = await fetchOrderBook(symbol);
-      const newData = {};
+useEffect(() => {
+  const generateFakeData = () => {
+    const tempData = {};
+    const today = new Date();
 
-      // Generate dummy volatility and volume for past 30 days
-      for (let i = 0; i < 30; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split("T")[0];
+    for (let i = 0; i < 60; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const dateStr = date.toISOString().split("T")[0];
 
-        newData[dateStr] = {
-          volatility: Math.random().toFixed(2),
-          volume: Math.floor(Math.random() * 10000),
-        };
-      }
+      tempData[dateStr] = {
+        volatility: parseFloat(Math.random().toFixed(2)),
+        volume: Math.floor(Math.random() * 10000),
+      };
+    }
 
-      const generatedData = {};
-      for (let i = 0; i < 100; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split("T")[0];
-        generatedData[dateStr] = {
-          volatility: Math.random().toFixed(2),
-          volume: Math.floor(Math.random() * 10000),
-        };
-      }
-      setVolatilityData(generatedData);
+    setVolatilityData(tempData);
+  };
 
-      // Set selectedDateData for today
-      const today = new Date().toISOString().split("T")[0];
-      setSelectedDateData({
-        timestamps: ["10:00", "11:00", "12:00"],
-        prices: [book?.bids?.[0]?.[0] || 30000, 30500, 30200],
-      });
-    };
+  const getBookData = async () => {
+    const book = await fetchOrderBook(symbol);
 
-    getData();
-  }, [symbol]);
+    setSelectedDateData({
+      timestamps: ["10:00", "11:00", "12:00"],
+      prices: [book?.bids?.[0]?.[0] || 30000, 30500, 30200],
+    });
+  };
+
+  generateFakeData();
+  getBookData();
+}, [symbol]);
+
 
   const handleDateSelect = (date) => {
     if (selectedDate === date) return; // 👈 Skip if same date
