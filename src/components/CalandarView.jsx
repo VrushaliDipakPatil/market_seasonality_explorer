@@ -1,29 +1,35 @@
-import React from 'react';
-import { Grid, Paper, Typography, Tooltip } from '@mui/material';
-import dayjs from 'dayjs';
+import React from "react";
+import { Grid, Paper, Typography, Tooltip } from "@mui/material";
+import dayjs from "dayjs";
 
-const CalendarView = ({ data, view, onDateSelect }) => {
-  const today = new Date().toISOString().split('T')[0];
+const CalendarView = ({ data, view, onDateSelect, selectedDate }) => {
+  const today = new Date().toISOString().split("T")[0];
 
   const generateDates = () => {
     const dates = [];
 
-    if (view === 'daily') {
+    if (view === "daily") {
       for (let i = 29; i >= 0; i--) {
-        const date = dayjs().subtract(i, 'day').format('YYYY-MM-DD');
+        const date = dayjs().subtract(i, "day").format("YYYY-MM-DD");
         dates.push(date);
       }
-    } else if (view === 'weekly') {
+    } else if (view === "weekly") {
       for (let i = 14; i >= 0; i--) {
-        const startOfWeek = dayjs().subtract(i * 7, 'day');
-        const weekDates = Array.from({ length: 7 }, (_, j) => startOfWeek.add(j, 'day').format('YYYY-MM-DD'));
+        const startOfWeek = dayjs().subtract(i * 7, "day");
+        const weekDates = Array.from({ length: 7 }, (_, j) =>
+          startOfWeek.add(j, "day").format("YYYY-MM-DD")
+        );
         dates.push(weekDates);
       }
-    } else if (view === 'monthly') {
+    } else if (view === "monthly") {
       for (let i = 11; i >= 0; i--) {
-        const month = dayjs().subtract(i, 'month').format('YYYY-MM');
-        const daysInMonth = dayjs(month + '-01').daysInMonth();
-        const monthDates = Array.from({ length: daysInMonth }, (_, j) => dayjs(month + '-01').add(j, 'day').format('YYYY-MM-DD'));
+        const month = dayjs().subtract(i, "month").format("YYYY-MM");
+        const daysInMonth = dayjs(month + "-01").daysInMonth();
+        const monthDates = Array.from({ length: daysInMonth }, (_, j) =>
+          dayjs(month + "-01")
+            .add(j, "day")
+            .format("YYYY-MM-DD")
+        );
         dates.push({ month, dates: monthDates });
       }
     }
@@ -32,20 +38,22 @@ const CalendarView = ({ data, view, onDateSelect }) => {
   };
 
   const computeMetrics = (dateGroup) => {
-    if (typeof dateGroup === 'string') {
+    if (typeof dateGroup === "string") {
       const metrics = data[dateGroup];
       return metrics
         ? {
             volatility: metrics.volatility,
             volume: metrics.volume,
             label: dateGroup,
+            date: dateGroup,
           }
         : null;
     } else if (Array.isArray(dateGroup)) {
       const valid = dateGroup.filter((d) => data[d]);
       if (!valid.length) return null;
       const avgVol = (
-        valid.reduce((sum, d) => sum + (data[d]?.volatility || 0), 0) / valid.length
+        valid.reduce((sum, d) => sum + (data[d]?.volatility || 0), 0) /
+        valid.length
       ).toFixed(2);
       const avgVolu = Math.round(
         valid.reduce((sum, d) => sum + (data[d]?.volume || 0), 0) / valid.length
@@ -53,13 +61,18 @@ const CalendarView = ({ data, view, onDateSelect }) => {
       return {
         volatility: avgVol,
         volume: avgVolu,
-        label: dayjs(valid[0]).format('MMM D') + ' - ' + dayjs(valid[valid.length - 1]).format('MMM D'),
+        label:
+          dayjs(valid[0]).format("MMM D") +
+          " - " +
+          dayjs(valid[valid.length - 1]).format("MMM D"),
+        date: valid[0],
       };
-    } else if (typeof dateGroup === 'object' && dateGroup.month) {
+    } else if (typeof dateGroup === "object" && dateGroup.month) {
       const valid = dateGroup.dates.filter((d) => data[d]);
       if (!valid.length) return null;
       const avgVol = (
-        valid.reduce((sum, d) => sum + (data[d]?.volatility || 0), 0) / valid.length
+        valid.reduce((sum, d) => sum + (data[d]?.volatility || 0), 0) /
+        valid.length
       ).toFixed(2);
       const avgVolu = Math.round(
         valid.reduce((sum, d) => sum + (data[d]?.volume || 0), 0) / valid.length
@@ -68,6 +81,7 @@ const CalendarView = ({ data, view, onDateSelect }) => {
         volatility: avgVol,
         volume: avgVolu,
         label: dateGroup.month,
+        date: valid[0],
       };
     }
   };
@@ -80,20 +94,34 @@ const CalendarView = ({ data, view, onDateSelect }) => {
         const metrics = computeMetrics(group);
         if (!metrics) return null;
 
-        const backgroundColor = metrics.volatility < 0.3
-          ? '#C8E6C9'
-          : metrics.volatility < 0.6
-          ? '#FFECB3'
-          : '#FFCDD2';
+        const backgroundColor =
+          metrics.volatility < 0.3
+            ? "#C8E6C9"
+            : metrics.volatility < 0.6
+            ? "#FFECB3"
+            : "#FFCDD2";
+
+        const isSelected = metrics.date === selectedDate;
+        const isToday = metrics.date === today;
 
         return (
-          <Grid item xs={view === 'daily' ? 3 : view === 'weekly' ? 2 : 2} key={index}>
+          <Grid
+            item
+            xs={view === "daily" ? 3 : view === "weekly" ? 2 : 2}
+            key={index}
+          >
             <Tooltip
               title={
                 <div>
-                  <div><strong>{metrics.label}</strong></div>
-                  <div><strong>Volatility:</strong> {metrics.volatility}</div>
-                  <div><strong>Volume:</strong> {metrics.volume}</div>
+                  <div>
+                    <strong>{metrics.label}</strong>
+                  </div>
+                  <div>
+                    <strong>Volatility:</strong> {metrics.volatility}
+                  </div>
+                  <div>
+                    <strong>Volume:</strong> {metrics.volume}
+                  </div>
                 </div>
               }
               arrow
@@ -104,16 +132,20 @@ const CalendarView = ({ data, view, onDateSelect }) => {
                   backgroundColor,
                   height: 80,
                   padding: 1,
-                  cursor: 'pointer',
-                  border: '1px solid #ccc',
-                  '&:hover': { opacity: 0.85 },
+                  cursor: "pointer",
+                  border: isSelected
+                    ? "2px solid black"
+                    : isToday
+                    ? "2px solid green"
+                    : "1px solid #ccc",
+                  "&:hover": { opacity: 0.85 },
                 }}
                 onClick={() => {
-                  if (typeof group === 'string') {
+                  if (typeof group === "string") {
                     onDateSelect(group);
                   } else if (Array.isArray(group)) {
                     onDateSelect(group[0]);
-                  } else if (typeof group === 'object' && group.dates?.length) {
+                  } else if (typeof group === "object" && group.dates?.length) {
                     onDateSelect(group.dates[0]);
                   }
                 }}

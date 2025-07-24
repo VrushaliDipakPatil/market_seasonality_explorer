@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import CalendarView from "./components/CalandarView";
 import DashboardPanel from "./components/DashboardPanel";
 import ViewSwitcher from "./components/ViewSwitcher";
-import { fetchOrderBook } from "./services/binanceservice";
 import { Container, Typography } from "@mui/material";
 import SymbolFilter from "./components/symbolFilter";
+
 
 function App() {
   const [view, setView] = useState("monthly");
@@ -14,8 +14,7 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [range, setRange] = useState({ start: null, end: null });
 
-useEffect(() => {
-  const generateFakeData = () => {
+  useEffect(() => {
     const tempData = {};
     const today = new Date();
 
@@ -25,50 +24,57 @@ useEffect(() => {
       const dateStr = date.toISOString().split("T")[0];
 
       tempData[dateStr] = {
-        volatility: parseFloat(Math.random().toFixed(2)),
+        volatility: parseFloat((Math.random() * 1).toFixed(2)),
         volume: Math.floor(Math.random() * 10000),
       };
     }
 
     setVolatilityData(tempData);
-  };
+  }, []);
 
-  const getBookData = async () => {
-    const book = await fetchOrderBook(symbol);
+  useEffect(() => {
+    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth`);
 
-    setSelectedDateData({
-      timestamps: ["10:00", "11:00", "12:00"],
-      prices: [book?.bids?.[0]?.[0] || 30000, 30500, 30200],
-    });
-  };
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const bid = data?.b?.[0]?.[0];
+        const ask = data?.a?.[0]?.[0];
 
-  generateFakeData();
-  getBookData();
-}, [symbol]);
+        if (bid && ask) {
+          const midPrice = (parseFloat(bid) + parseFloat(ask)) / 2;
+          const now = new Date().toLocaleTimeString();
 
+          setSelectedDateData((prev) => {
+            const prevTimestamps = prev?.timestamps || [];
+            const prevPrices = prev?.prices || [];
+
+            return {
+              timestamps: [...prevTimestamps, now].slice(-15),
+              prices: [...prevPrices, midPrice].slice(-15),
+            };
+          });
+        }
+      } catch (err) {
+        console.error("WebSocket parse error:", err);
+      }
+    };
+
+    return () => ws.close();
+  }, [symbol]);
 
   const handleDateSelect = (date) => {
-    if (selectedDate === date) return; // 👈 Skip if same date
+    if (selectedDate === date) return;
 
-    setSelectedDate(date);
+    setSelectedDate(date); // ✅ Fix: Set selected date
+    setSelectedDateData({ timestamps: [], prices: [] });
 
-    // Range selection logic
     setRange((prev) => {
       if (!prev.start || (prev.start && prev.end)) {
         return { start: date, end: null };
       } else {
         return { start: prev.start, end: date };
       }
-    });
-
-    // Simulate chart data
-    setSelectedDateData({
-      timestamps: ["10:00", "11:00", "12:00"],
-      prices: [
-        Math.floor(30000 + Math.random() * 1000),
-        Math.floor(30000 + Math.random() * 1000),
-        Math.floor(30000 + Math.random() * 1000),
-      ],
     });
   };
 
@@ -86,6 +92,7 @@ useEffect(() => {
         view={view}
         onDateSelect={handleDateSelect}
         range={range}
+        selectedDate={selectedDate}
       />
 
       <DashboardPanel selectedDateData={selectedDateData} />
