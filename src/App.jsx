@@ -16,7 +16,7 @@ function App() {
 
 useEffect(() => {
   const getData = async () => {
-    const realData = await fetchHistoricalData(symbol, "1d", 60);
+    const realData = await fetchHistoricalData(symbol, "1d", 1000);
     setVolatilityData(realData);
   };
 

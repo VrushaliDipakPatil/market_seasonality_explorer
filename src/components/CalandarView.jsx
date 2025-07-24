@@ -17,16 +17,23 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 
 const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
-  const [currentDate, setCurrentDate] = useState(dayjs());
-
   const today = dayjs();
+  const [currentDate, setCurrentDate] = useState(today);
 
   const isFutureDate = (date) => date.isAfter(today, "day");
+  const isPastLimit = (date) => date.isBefore(today.subtract(364, "day"), "day");
 
   const handlePrev = () => {
-    if (view === "daily") setCurrentDate((prev) => prev.subtract(1, "day"));
-    if (view === "weekly") setCurrentDate((prev) => prev.subtract(1, "week"));
-    if (view === "monthly") setCurrentDate((prev) => prev.subtract(1, "month"));
+    const prevDate =
+      view === "daily"
+        ? currentDate.subtract(1, "day")
+        : view === "weekly"
+        ? currentDate.subtract(1, "week")
+        : currentDate.subtract(1, "month");
+
+    if (!isPastLimit(prevDate)) {
+      setCurrentDate(prevDate);
+    }
   };
 
   const handleNext = () => {
@@ -43,35 +50,31 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
   };
 
   const getDailyCells = () => {
-    const date = currentDate;
-    const cell = renderCell(date);
-    return [cell];
+    return [renderCell(currentDate)];
   };
 
   const getWeeklyCells = () => {
     const startOfWeek = currentDate.startOf("week");
-    const cells = [];
-    for (let i = 0; i < 7; i++) {
+    return Array.from({ length: 7 }).map((_, i) => {
       const date = startOfWeek.add(i, "day");
-      cells.push(renderCell(date));
-    }
-    return cells;
+      return renderCell(date);
+    });
   };
 
   const getMonthlyCells = () => {
     const startOfMonth = currentDate.startOf("month");
-    const daysInMonth = currentDate.daysInMonth();
+    const endOfMonth = currentDate.endOf("month");
     const cells = [];
-    for (let i = 0; i < daysInMonth; i++) {
-      const date = startOfMonth.add(i, "day");
-      cells.push(renderCell(date));
+    let day = startOfMonth;
+    while (day.isSameOrBefore(endOfMonth)) {
+      cells.push(renderCell(day));
+      day = day.add(1, "day");
     }
     return cells;
   };
 
   const renderCell = (date) => {
     const dateStr = date.format("YYYY-MM-DD");
-    const day = date.date();
     const isTodayDate = date.isToday();
     const isSelected = selectedDate && dateStr === selectedDate;
     const inRange =
@@ -102,8 +105,8 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
         }}
       >
         <Typography variant="subtitle2">{date.format("DD MMM")}</Typography>
-        <Typography variant="caption">Vol: {volatility || "-"}</Typography>
-        <Typography variant="caption">Volu: {volume || "-"}</Typography>
+        <Typography variant="caption">Vol: {volatility || "-"}</Typography><br/>
+        <Typography variant="caption">Volu: {volume?.toFixed(2) || "-"}</Typography>
       </Paper>
     );
   };
@@ -142,7 +145,13 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
   return (
     <Box mt={2}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <IconButton onClick={handlePrev}>
+        <IconButton onClick={handlePrev} disabled={isPastLimit(
+          view === "daily"
+            ? currentDate.subtract(1, "day")
+            : view === "weekly"
+            ? currentDate.subtract(1, "week")
+            : currentDate.subtract(1, "month")
+        )}>
           <ArrowBack />
         </IconButton>
         <Typography variant="h6">{getTitle()}</Typography>
@@ -156,7 +165,9 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
           <ArrowForward />
         </IconButton>
       </Box>
-      <Box display="flex" justifyContent="center" flexWrap="wrap">{renderCells()}</Box>
+      <Box display="flex" justifyContent="center" flexWrap="wrap">
+        {renderCells()}
+      </Box>
     </Box>
   );
 };

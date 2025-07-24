@@ -1,5 +1,5 @@
 // src/services/binanceservice.js
-export const fetchHistoricalData = async (symbol = "BTCUSDT", interval = "1d", limit = 60) => {
+export const fetchHistoricalData = async (symbol = "BTCUSDT", interval = "1d", limit = 1000) => {
   const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
   const response = await fetch(url);
   const data = await response.json();
