@@ -156,7 +156,7 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
           <ArrowForward />
         </IconButton>
       </Box>
-      <Grid container>{renderCells()}</Grid>
+      <Box display="flex" justifyContent="center" flexWrap="wrap">{renderCells()}</Box>
     </Box>
   );
 };
