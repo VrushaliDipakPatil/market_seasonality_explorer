@@ -10,10 +10,13 @@ export const fetchHistoricalData = async (symbol = "BTCUSDT", interval = "1d", l
     const open = parseFloat(item[1]);
     const high = parseFloat(item[2]);
     const low = parseFloat(item[3]);
+    const close = parseFloat(item[4]);
     const volume = parseFloat(item[5]);
 
     const volatility = parseFloat(((high - low) / open).toFixed(2));
-    result[date] = { volatility, volume };
+    const performance = close > open ? 'up' : close < open ? 'down' : 'neutral';
+
+    result[date] = { volatility, volume, performance };
   });
 
   return result;

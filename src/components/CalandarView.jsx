@@ -6,7 +6,7 @@ import {
   Box,
   Paper,
 } from "@mui/material";
-import { ArrowBack, ArrowForward } from "@mui/icons-material";
+import { ArrowBack, ArrowForward, ArrowDropUp, ArrowDropDown, Remove } from "@mui/icons-material";
 import dayjs from "dayjs";
 import isToday from "dayjs/plugin/isToday";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
@@ -15,6 +15,19 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 dayjs.extend(isToday);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
+
+const getVolatilityColor = (volatility) => {
+  if (volatility == null) return "#ffffff";
+  if (volatility < 0.01) return "#d0f0c0"; // Light green
+  if (volatility < 0.03) return "#fff4cc"; // Light yellow
+  return "#ffd6d6"; // Light red
+};
+
+const getPerformanceIcon = (performance) => {
+  if (performance > 0) return <ArrowDropUp sx={{ color: "green" }} />;
+  if (performance < 0) return <ArrowDropDown sx={{ color: "red" }} />;
+  return <Remove sx={{ color: "gray" }} />;
+};
 
 const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
   const today = dayjs();
@@ -83,7 +96,9 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
       date.isSameOrBefore(dayjs(range.end));
 
     const cellData = data[dateStr] || {};
-    const { volatility, volume } = cellData;
+    const { volatility, volume, performance } = cellData;
+
+    const cellColor = getVolatilityColor(volatility);
 
     return (
       <Paper
@@ -99,14 +114,44 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
             ? "#cce5ff"
             : inRange
             ? "#e6f7ff"
-            : "white",
+            : cellColor,
           border: isTodayDate ? "2px solid #1976d2" : "1px solid #ccc",
           opacity: isFutureDate(date) ? 0.5 : 1,
+          position: "relative",
         }}
       >
         <Typography variant="subtitle2">{date.format("DD MMM")}</Typography>
         <Typography variant="caption">Vol: {volatility || "-"}</Typography><br/>
         <Typography variant="caption">Volu: {volume?.toFixed(2) || "-"}</Typography>
+
+        {/* Volume bar visual */}
+        {volume && (
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: 4,
+              left: 4,
+              width: "90%",
+              height: 6,
+              backgroundColor: "#eee",
+              borderRadius: 2,
+            }}
+          >
+            <Box
+              sx={{
+                height: "100%",
+                width: `${Math.min(100, (volume / 5000) * 100)}%`, // Adjust divisor to scale
+                backgroundColor: "#1976d2",
+                borderRadius: 2,
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Performance icon */}
+        <Box sx={{ position: "absolute", top: 4, right: 4 }}>
+          {getPerformanceIcon(performance)}
+        </Box>
       </Paper>
     );
   };
