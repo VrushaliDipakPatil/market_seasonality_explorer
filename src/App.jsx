@@ -4,7 +4,7 @@ import DashboardPanel from "./components/DashboardPanel";
 import ViewSwitcher from "./components/ViewSwitcher";
 import { Container, Typography } from "@mui/material";
 import SymbolFilter from "./components/symbolFilter";
-
+import { fetchHistoricalData } from "./services/binanceService";
 
 function App() {
   const [view, setView] = useState("monthly");
@@ -14,23 +14,14 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [range, setRange] = useState({ start: null, end: null });
 
-  useEffect(() => {
-    const tempData = {};
-    const today = new Date();
+useEffect(() => {
+  const getData = async () => {
+    const realData = await fetchHistoricalData(symbol, "1d", 60);
+    setVolatilityData(realData);
+  };
 
-    for (let i = 0; i < 60; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      const dateStr = date.toISOString().split("T")[0];
-
-      tempData[dateStr] = {
-        volatility: parseFloat((Math.random() * 1).toFixed(2)),
-        volume: Math.floor(Math.random() * 10000),
-      };
-    }
-
-    setVolatilityData(tempData);
-  }, []);
+  getData();
+}, [symbol]);
 
   useEffect(() => {
     const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth`);
@@ -66,7 +57,7 @@ function App() {
   const handleDateSelect = (date) => {
     if (selectedDate === date) return;
 
-    setSelectedDate(date); // ✅ Fix: Set selected date
+    setSelectedDate(date);
     setSelectedDateData({ timestamps: [], prices: [] });
 
     setRange((prev) => {
