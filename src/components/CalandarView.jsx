@@ -1,170 +1,162 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
-  Box,
-  Typography,
   Grid,
+  Typography,
   IconButton,
+  Box,
+  Paper,
 } from "@mui/material";
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
-import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  addMonths,
-  subMonths,
-  isSameDay,
-  isToday,
-  parseISO,
-  addWeeks,
-  subWeeks,
-  startOfYear,
-  endOfYear,
-  addYears,
-  subYears,
-} from "date-fns";
+import dayjs from "dayjs";
+import isToday from "dayjs/plugin/isToday";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 
-const CalendarView = ({ data, view, onDateSelect, selectedDate }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const containerRef = useRef(null);
+dayjs.extend(isToday);
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
+
+const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
+  const [currentDate, setCurrentDate] = useState(dayjs());
+
+  const today = dayjs();
+
+  const isFutureDate = (date) => date.isAfter(today, "day");
 
   const handlePrev = () => {
-    setCurrentDate((prev) =>
-      view === "monthly"
-        ? subMonths(prev, 1)
-        : view === "weekly"
-        ? subWeeks(prev, 15)
-        : subWeeks(prev, 8)
-    );
+    if (view === "daily") setCurrentDate((prev) => prev.subtract(1, "day"));
+    if (view === "weekly") setCurrentDate((prev) => prev.subtract(1, "week"));
+    if (view === "monthly") setCurrentDate((prev) => prev.subtract(1, "month"));
   };
 
   const handleNext = () => {
-    setCurrentDate((prev) =>
-      view === "monthly"
-        ? addMonths(prev, 1)
+    const nextDate =
+      view === "daily"
+        ? currentDate.add(1, "day")
         : view === "weekly"
-        ? addWeeks(prev, 15)
-        : addWeeks(prev, 8)
-    );
-  };
+        ? currentDate.add(1, "week")
+        : currentDate.add(1, "month");
 
-  const getCalendarCells = () => {
-    const today = new Date();
-
-    if (view === "daily") {
-      const end = today;
-      const start = subWeeks(end, 8); // ~60 days
-      return eachDayOfInterval({ start, end });
-    } else if (view === "weekly") {
-      const end = today;
-      const weeks = [];
-      for (let i = 14; i >= 0; i--) {
-        weeks.push(subWeeks(end, i)); // 15 weeks
-      }
-      return weeks;
-    } else {
-      const start = startOfMonth(currentDate);
-      const end = endOfMonth(currentDate);
-      return eachDayOfInterval({ start, end });
+    if (!isFutureDate(nextDate)) {
+      setCurrentDate(nextDate);
     }
   };
 
-  const cells = getCalendarCells();
+  const getDailyCells = () => {
+    const date = currentDate;
+    const cell = renderCell(date);
+    return [cell];
+  };
+
+  const getWeeklyCells = () => {
+    const startOfWeek = currentDate.startOf("week");
+    const cells = [];
+    for (let i = 0; i < 7; i++) {
+      const date = startOfWeek.add(i, "day");
+      cells.push(renderCell(date));
+    }
+    return cells;
+  };
+
+  const getMonthlyCells = () => {
+    const startOfMonth = currentDate.startOf("month");
+    const daysInMonth = currentDate.daysInMonth();
+    const cells = [];
+    for (let i = 0; i < daysInMonth; i++) {
+      const date = startOfMonth.add(i, "day");
+      cells.push(renderCell(date));
+    }
+    return cells;
+  };
+
+  const renderCell = (date) => {
+    const dateStr = date.format("YYYY-MM-DD");
+    const day = date.date();
+    const isTodayDate = date.isToday();
+    const isSelected = selectedDate && dateStr === selectedDate;
+    const inRange =
+      range.start && range.end &&
+      date.isSameOrAfter(dayjs(range.start)) &&
+      date.isSameOrBefore(dayjs(range.end));
+
+    const cellData = data[dateStr] || {};
+    const { volatility, volume } = cellData;
+
+    return (
+      <Paper
+        key={dateStr}
+        onClick={() => !isFutureDate(date) && onDateSelect(dateStr)}
+        sx={{
+          p: 1,
+          m: 0.5,
+          width: 100,
+          height: 100,
+          cursor: isFutureDate(date) ? "not-allowed" : "pointer",
+          backgroundColor: isSelected
+            ? "#cce5ff"
+            : inRange
+            ? "#e6f7ff"
+            : "white",
+          border: isTodayDate ? "2px solid #1976d2" : "1px solid #ccc",
+          opacity: isFutureDate(date) ? 0.5 : 1,
+        }}
+      >
+        <Typography variant="subtitle2">{date.format("DD MMM")}</Typography>
+        <Typography variant="caption">Vol: {volatility || "-"}</Typography>
+        <Typography variant="caption">Volu: {volume || "-"}</Typography>
+      </Paper>
+    );
+  };
+
+  const renderCells = () => {
+    if (view === "daily") return getDailyCells();
+    if (view === "weekly") return getWeeklyCells();
+    if (view === "monthly") return getMonthlyCells();
+    return [];
+  };
+
+  const getTitle = () => {
+    if (view === "daily") return currentDate.format("DD MMM YYYY");
+    if (view === "weekly") {
+      const start = currentDate.startOf("week").format("DD MMM");
+      const end = currentDate.endOf("week").format("DD MMM YYYY");
+      return `${start} - ${end}`;
+    }
+    if (view === "monthly") return currentDate.format("MMMM YYYY");
+    return "";
+  };
 
   const handleKeyDown = useCallback(
-    (e, date) => {
-      const index = cells.findIndex((d) => isSameDay(d, date));
-      let newIndex = index;
-      if (e.key === "ArrowRight") newIndex++;
-      else if (e.key === "ArrowLeft") newIndex--;
-      else if (e.key === "ArrowDown") newIndex += 7;
-      else if (e.key === "ArrowUp") newIndex -= 7;
-      else if (e.key === "Enter") onDateSelect(format(date, "yyyy-MM-dd"));
-      else if (e.key === "Escape") containerRef.current?.blur();
-
-      if (newIndex >= 0 && newIndex < cells.length) {
-        document.getElementById(`cell-${newIndex}`)?.focus();
-      }
+    (e) => {
+      if (e.key === "ArrowLeft") handlePrev();
+      else if (e.key === "ArrowRight") handleNext();
     },
-    [cells, onDateSelect]
+    [currentDate, view]
   );
 
-  const headingLabel =
-    view === "monthly"
-      ? format(currentDate, "MMMM yyyy")
-      : view === "weekly"
-      ? "Last 15 Weeks"
-      : "Last 60 Days";
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   return (
-    <Box mt={4} ref={containerRef}>
-      <Box display="flex" alignItems="center" justifyContent="space-between">
+    <Box mt={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center">
         <IconButton onClick={handlePrev}>
           <ArrowBack />
         </IconButton>
-        <Typography variant="h6">{headingLabel}</Typography>
-        <IconButton onClick={handleNext}>
+        <Typography variant="h6">{getTitle()}</Typography>
+        <IconButton onClick={handleNext} disabled={isFutureDate(
+          view === "daily"
+            ? currentDate.add(1, "day")
+            : view === "weekly"
+            ? currentDate.add(1, "week")
+            : currentDate.add(1, "month")
+        )}>
           <ArrowForward />
         </IconButton>
       </Box>
-
-      <Grid
-        container
-        spacing={1}
-        mt={2}
-        columns={view === "monthly" ? 7 : 5}
-      >
-        {cells.map((date, index) => {
-          const dateStr = format(date, "yyyy-MM-dd");
-          const cellData = data[dateStr];
-          const isSelected =
-            selectedDate && isSameDay(parseISO(selectedDate), date);
-
-          return (
-            <Grid
-              key={dateStr}
-              item
-              xs={view === "monthly" ? 1 : 1}
-              tabIndex={0}
-              id={`cell-${index}`}
-              onKeyDown={(e) => handleKeyDown(e, date)}
-              onClick={() => onDateSelect(dateStr)}
-              sx={{
-                p: 1,
-                border: "1px solid #ccc",
-                borderRadius: 2,
-                backgroundColor: isSelected
-                  ? "lightblue"
-                  : isToday(date)
-                  ? "#e0f7fa"
-                  : "white",
-                cursor: "pointer",
-                outline: "none",
-                "&:focus": { boxShadow: "0 0 0 2px #1976d2" },
-              }}
-            >
-              <Typography variant="subtitle2">
-                {view === "weekly"
-                  ? `Week of ${format(date, "dd MMM")}`
-                  : format(date, "dd MMM")}
-              </Typography>
-              {cellData ? (
-                <>
-                  <Typography variant="caption">
-                    Vol: {cellData.volatility}
-                  </Typography>
-                  <br />
-                  <Typography variant="caption">
-                    Volu: {cellData.volume}
-                  </Typography>
-                </>
-              ) : (
-                <Typography variant="caption">No data</Typography>
-              )}
-            </Grid>
-          );
-        })}
-      </Grid>
+      <Grid container>{renderCells()}</Grid>
     </Box>
   );
 };
