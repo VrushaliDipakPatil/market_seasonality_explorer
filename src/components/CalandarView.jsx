@@ -64,44 +64,115 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
     return "-";
   };
 
-  const renderCell = (date, label = null, cellData = null) => {
-    const dateStr = date.format("YYYY-MM-DD");
-    const isTodayDate = date.isToday();
-    const isSelected = selectedDate && dateStr === selectedDate;
-    const inRange =
-      range.start &&
-      range.end &&
-      date.isSameOrAfter(dayjs(range.start)) &&
-      date.isSameOrBefore(dayjs(range.end));
+const renderCell = (date, label = null, cellData = null) => {
+  const dateStr = date.format("YYYY-MM-DD");
+  const isTodayDate = date.isToday();
+  const isSelected = selectedDate && dateStr === selectedDate;
+  const inRange =
+    range.start &&
+    range.end &&
+    date.isSameOrAfter(dayjs(range.start)) &&
+    date.isSameOrBefore(dayjs(range.end));
 
-    const { volatility, volume, priceChange } = cellData || data[dateStr] || {};
+  const { volatility, volume, priceChange } = cellData || data[dateStr] || {};
 
-    return (
-      <Paper
-        key={label || dateStr}
-        onClick={() => !isFutureDate(date) && onDateSelect(dateStr)}
-        sx={{
-          p: 1,
-          m: 0.5,
-          width: 100,
-          height: 100,
-          cursor: isFutureDate(date) ? "not-allowed" : "pointer",
-          backgroundColor: isSelected
-            ? "#cce5ff"
-            : inRange
-            ? "#e6f7ff"
-            : getVolatilityColor(volatility),
-          border: isTodayDate ? "2px solid #1976d2" : "1px solid #ccc",
-          opacity: isFutureDate(date) ? 0.5 : 1,
-        }}
-      >
-        <Typography variant="subtitle2">{label || date.format("DD MMM")}</Typography>
-        <Typography variant="caption">Vol: {volatility?.toFixed(2) || "-"}</Typography><br />
-        <Typography variant="caption">Volu: {volume?.toFixed(2) || "-"}</Typography><br />
-        <Typography variant="caption">{getPerformanceArrow(priceChange)}</Typography>
-      </Paper>
-    );
+  // Volatility Color
+  const getVolatilityColor = (volatility) => {
+    if (volatility >= 0.06) return "#f44336"; // High - Red
+    if (volatility >= 0.03) return "#ff9800"; // Medium - Orange
+    if (volatility >= 0.01) return "#8bc34a"; // Low - Green
+    return "#e0e0e0"; // Very low / no data - Gray
   };
+
+  // Volume Bar Width (% based on max observed volume)
+  const getBarWidthPercent = (volume) => {
+    if (!volume || volume <= 0) return 0;
+    if (volume >= 1000000) return 95;
+    if (volume >= 500000) return 75;
+    if (volume >= 100000) return 50;
+    if (volume >= 10000) return 25;
+    return 10;
+  };
+
+  // Performance Arrow and Color
+  const getPerformanceIndicator = (change) => {
+    if (change > 0) return { arrow: "▲", color: "green" };
+    if (change < 0) return { arrow: "▼", color: "red" };
+    return { arrow: "-", color: "gray" };
+  };
+
+  const perf = getPerformanceIndicator(priceChange);
+  const barWidth = getBarWidthPercent(volume);
+
+  return (
+<Paper
+  key={label || dateStr}
+  onClick={() => !isFutureDate(date) && onDateSelect(dateStr)}
+  sx={{
+    p: 1,
+    m: 0.5,
+    width: 100,
+    height: 100,
+    cursor: isFutureDate(date) ? "not-allowed" : "pointer",
+    backgroundColor: isSelected
+      ? "#cce5ff"
+      : inRange
+      ? "#e6f7ff"
+      : getVolatilityColor(volatility),
+    border: isTodayDate ? "2px solid #1976d2" : "1px solid #ccc",
+    opacity: isFutureDate(date) ? 0.5 : 1,
+    position: "relative",
+    // display: "flex",
+    // flexDirection: "column",
+    // justifyContent: "space-between",  // Even spacing top to bottom
+    alignItems: "flex-start",         // Align content to left
+    overflow: "hidden",
+  }}
+>
+  {/* Top: Label (Date or Month) */}
+  <Typography variant="subtitle2" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
+    {label || date.format("DD MMM")}
+  </Typography>
+
+  {/* Middle: Data */}
+  <Box sx={{ mt: "auto" }}>
+    <Typography variant="caption" sx={{ lineHeight: 1.2 }}>
+      Vol: {volatility?.toFixed(2) || "-"}
+    </Typography><br/>
+    <Typography variant="caption" sx={{ lineHeight: 1.2 }}>
+      Volu: {volume?.toFixed(0) || "-"}
+    </Typography><br/>
+    <Typography
+      variant="caption"
+      sx={{
+        color: perf.color,
+        fontWeight: "bold",
+        fontSize: 16,
+        lineHeight: 1.2,
+      }}
+    >
+      {perf.arrow}
+    </Typography>
+  </Box>
+
+  {/* Bottom: Volume Bar */}
+  <Box
+    sx={{
+      position: "absolute",
+      bottom: 6,
+      left: 4,
+      height: 6,
+      width: `${barWidth}%`,
+      backgroundColor: "#1976d2",
+      borderRadius: "4px",
+      opacity: 0.8,
+    }}
+  />
+</Paper>
+  );
+};
+
+
 
   const getDailyCells = () => {
     const startOfMonth = currentDate.startOf("month");
