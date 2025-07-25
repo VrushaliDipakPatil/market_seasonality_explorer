@@ -226,7 +226,7 @@ const getDailyCells = () => {
         priceChange: perf,
       }));
     }
-    return cells;
+    return cells.reverse();
   };
 
   const getMonthlyCells = () => {
