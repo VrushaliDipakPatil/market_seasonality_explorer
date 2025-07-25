@@ -51,18 +51,6 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
     }
   }, [currentDate, view]);
 
-  const getVolatilityColor = (volatility) => {
-    if (volatility >= 0.06) return "#f44336"; // red - high
-    if (volatility >= 0.03) return "#ff9800"; // orange - medium
-    if (volatility >= 0.01) return "#8bc34a"; // green - low
-    return "#e0e0e0"; // gray
-  };
-
-  const getPerformanceArrow = (perf) => {
-    if (perf > 0) return "▲";
-    if (perf < 0) return "▼";
-    return "-";
-  };
 
 const renderCell = (date, label = null, cellData = null) => {
   const dateStr = date.format("YYYY-MM-DD");
@@ -76,7 +64,6 @@ const renderCell = (date, label = null, cellData = null) => {
 
   const { volatility, volume, priceChange } = cellData || data[dateStr] || {};
 
-  // Volatility Color
   const getVolatilityColor = (volatility) => {
     if (volatility >= 0.06) return "#f44336"; // High - Red
     if (volatility >= 0.03) return "#ff9800"; // Medium - Orange
@@ -84,7 +71,6 @@ const renderCell = (date, label = null, cellData = null) => {
     return "#e0e0e0"; // Very low / no data - Gray
   };
 
-  // Volume Bar Width (% based on max observed volume)
   const getBarWidthPercent = (volume) => {
     if (!volume || volume <= 0) return 0;
     if (volume >= 1000000) return 95;
@@ -94,8 +80,8 @@ const renderCell = (date, label = null, cellData = null) => {
     return 10;
   };
 
-  // Performance Arrow and Color
   const getPerformanceIndicator = (change) => {
+    if (typeof change !== "number") return { arrow: "-", color: "gray" };
     if (change > 0) return { arrow: "▲", color: "green" };
     if (change < 0) return { arrow: "▼", color: "red" };
     return { arrow: "-", color: "gray" };
@@ -105,87 +91,108 @@ const renderCell = (date, label = null, cellData = null) => {
   const barWidth = getBarWidthPercent(volume);
 
   return (
-<Paper
-  key={label || dateStr}
-  onClick={() => !isFutureDate(date) && onDateSelect(dateStr)}
-  sx={{
-    p: 1,
-    m: 0.5,
-    width: 100,
-    height: 100,
-    cursor: isFutureDate(date) ? "not-allowed" : "pointer",
-    backgroundColor: isSelected
-      ? "#cce5ff"
-      : inRange
-      ? "#e6f7ff"
-      : getVolatilityColor(volatility),
-    border: isTodayDate ? "2px solid #1976d2" : "1px solid #ccc",
-    opacity: isFutureDate(date) ? 0.5 : 1,
-    position: "relative",
-    // display: "flex",
-    // flexDirection: "column",
-    // justifyContent: "space-between",  // Even spacing top to bottom
-    alignItems: "flex-start",         // Align content to left
-    overflow: "hidden",
-  }}
->
-  {/* Top: Label (Date or Month) */}
-  <Typography variant="subtitle2" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
-    {label || date.format("DD MMM")}
-  </Typography>
-
-  {/* Middle: Data */}
-  <Box sx={{ mt: "auto" }}>
-    <Typography variant="caption" sx={{ lineHeight: 1.2 }}>
-      Vol: {volatility?.toFixed(2) || "-"}
-    </Typography><br/>
-    <Typography variant="caption" sx={{ lineHeight: 1.2 }}>
-      Volu: {volume?.toFixed(0) || "-"}
-    </Typography><br/>
-    <Typography
-      variant="caption"
+    <Paper
+      key={label || dateStr}
+      onClick={() => !isFutureDate(date) && onDateSelect(dateStr)}
       sx={{
-        color: perf.color,
-        fontWeight: "bold",
-        fontSize: 16,
-        lineHeight: 1.2,
+        p: 1,
+        m: 0.5,
+        width: 100,
+        height: 100,
+        cursor: isFutureDate(date) ? "not-allowed" : "pointer",
+        backgroundColor: isSelected
+          ? "#cce5ff"
+          : inRange
+          ? "#e6f7ff"
+          : getVolatilityColor(volatility),
+        border: isTodayDate ? "2px solid #1976d2" : "1px solid #ccc",
+        opacity: isFutureDate(date) ? 0.5 : 1,
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        overflow: "hidden",
       }}
     >
-      {perf.arrow}
-    </Typography>
-  </Box>
+      {/* Top: Label */}
+      <Typography variant="subtitle2" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
+        {label || date.format("DD MMM")}
+      </Typography>
 
-  {/* Bottom: Volume Bar */}
-  <Box
-    sx={{
-      position: "absolute",
-      bottom: 6,
-      left: 4,
-      height: 6,
-      width: `${barWidth}%`,
-      backgroundColor: "#1976d2",
-      borderRadius: "4px",
-      opacity: 0.8,
-    }}
-  />
-</Paper>
+      {/* Middle: Volatility, Volume, Arrow */}
+      <Box sx={{ width: "100%" }}>
+        <Typography variant="caption" sx={{ lineHeight: 1.2 }}>
+          Vol: {volatility?.toFixed(2) || "-"}
+        </Typography><br/>
+        <Typography variant="caption" sx={{ lineHeight: 1.2 }}>
+          Volu: {volume?.toFixed(0) || "-"}
+        </Typography><br/>
+        <Typography
+          variant="caption"
+          sx={{
+            color: perf.color,
+            fontWeight: "bold",
+            fontSize: 16,
+            lineHeight: 1.2,
+          }}
+        >
+          {perf.arrow}
+        </Typography>
+      </Box>
+
+      {/* Bottom: Volume Bar */}
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: 4,
+          left: 4,
+          height: 5,
+          width: `${barWidth}%`,
+          backgroundColor: "#1976d2",
+          borderRadius: "4px",
+          opacity: 0.8,
+        }}
+      />
+    </Paper>
   );
 };
 
 
 
-  const getDailyCells = () => {
-    const startOfMonth = currentDate.startOf("month");
-    const endOfMonth = currentDate.endOf("month");
-    const cells = [];
-    let day = startOfMonth;
 
-    while (day.isSameOrBefore(endOfMonth)) {
-      cells.push(renderCell(day));
-      day = day.add(1, "day");
-    }
-    return cells;
-  };
+const getDailyCells = () => {
+  const startOfMonth = currentDate.startOf("month");
+  const endOfMonth = currentDate.endOf("month");
+  const cells = [];
+  let day = startOfMonth;
+
+  while (day.isSameOrBefore(endOfMonth)) {
+    const dateStr = day.format("YYYY-MM-DD");
+    const entry = data[dateStr] || {};
+
+    const volatility = entry.volatility || 0;
+    const volume = entry.volume || 0;
+    const priceChange =
+      entry.performance === "up"
+        ? 1
+        : entry.performance === "down"
+        ? -1
+        : 0;
+
+    cells.push(
+      renderCell(day, null, {
+        volatility,
+        volume,
+        priceChange,
+      })
+    );
+
+    day = day.add(1, "day");
+  }
+  return cells;
+};
+
 
   const getWeeklyCells = () => {
     const cells = [];
@@ -195,8 +202,7 @@ const renderCell = (date, label = null, cellData = null) => {
 
       let weeklyVol = 0;
       let totalVolu = 0;
-      let priceStart = null;
-      let priceEnd = null;
+      let performance = 0;
       let count = 0;
 
       for (let j = 0; j < 7; j++) {
@@ -206,14 +212,13 @@ const renderCell = (date, label = null, cellData = null) => {
         if (entry) {
           weeklyVol += entry.volatility || 0;
           totalVolu += entry.volume || 0;
-          if (priceStart === null) priceStart = entry.open;
-          priceEnd = entry.close;
+          performance = entry.performance === "up" ? 1 : entry.performance === "down" ? -1 : 0
           count++;
         }
       }
 
       const avgVol = count ? weeklyVol / count : 0;
-      const perf = priceStart && priceEnd ? (priceEnd - priceStart) / priceStart : 0;
+      const perf = performance;
 
       cells.push(renderCell(weekStart, `${weekStart.format("DD MMM")} - ${weekEnd.format("DD MMM")}`, {
         volatility: avgVol,
@@ -233,8 +238,7 @@ const renderCell = (date, label = null, cellData = null) => {
       const monthEnd = monthStart.endOf("month");
       let monthVol = 0;
       let totalVolu = 0;
-      let priceStart = null;
-      let priceEnd = null;
+      let performance = 0;
       let count = 0;
 
       for (let d = monthStart; d.isSameOrBefore(monthEnd); d = d.add(1, "day")) {
@@ -243,14 +247,13 @@ const renderCell = (date, label = null, cellData = null) => {
         if (entry) {
           monthVol += entry.volatility || 0;
           totalVolu += entry.volume || 0;
-          if (priceStart === null) priceStart = entry.open;
-          priceEnd = entry.close;
+          performance = entry.performance === "up" ? 1 : entry.performance === "down" ? -1 : 0
           count++;
         }
       }
 
       const avgVol = count ? monthVol / count : 0;
-      const perf = priceStart && priceEnd ? (priceEnd - priceStart) / priceStart : 0;
+      const perf = performance;
 
       cells.push(renderCell(monthStart, monthStart.format("MMMM"), {
         volatility: avgVol,
