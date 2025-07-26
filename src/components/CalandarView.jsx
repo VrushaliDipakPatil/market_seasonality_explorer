@@ -7,6 +7,9 @@ import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import { Tooltip } from "@mui/material";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import RemoveIcon from "@mui/icons-material/Remove";
 
 dayjs.extend(isToday);
 dayjs.extend(isSameOrBefore);
@@ -60,15 +63,32 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
     const { volatility, volume, priceChange, open, close, high, low } =
       cellData || data[dateStr] || {};
 
-    const tooltipText = `
-Volatility: ${volatility?.toFixed(2) ?? "-"}
-Volume: ${volume?.toFixed(2) ?? "-"}
-Performance: ${priceChange === 1 ? "▲" : priceChange === -1 ? "▼" : "-"}
-Opening Price: ${open?.toFixed(2)}
-Closing Price: ${close?.toFixed(2)}
-High / Low: ${high?.toFixed(2)} / ${low?.toFixed(2)}
-Price Change: ${priceChange?.toFixed(2)}%
-  `;
+const tooltipText = (
+  <div>
+    <div>Volatility: {volatility?.toFixed(2) ?? "-"}</div>
+    <div>Volume: {volume?.toFixed(2) ?? "-"}</div>
+    <div style={{ display: "flex", alignItems: "center" }}>
+      Performance:&nbsp;
+      {priceChange === 1 ? (
+        <ArrowUpwardIcon fontSize="small"/>
+      ) : priceChange === -1 ? (
+        <ArrowDownwardIcon fontSize="small"/>
+      ) : (
+        <RemoveIcon fontSize="small" />
+      )}
+    </div>
+    <div>Opening Price: {open?.toFixed(2) ?? "-"}</div>
+    <div>Closing Price: {close?.toFixed(2) ?? "-"}</div>
+    <div>
+      High / Low: {high?.toFixed(2) ?? "-"} / {low?.toFixed(2) ?? "-"}
+    </div>
+    <div>
+      Price Change:{" "}
+      {typeof priceChange === "number" ? `${priceChange.toFixed(2)}%` : "-"}
+    </div>
+  </div>
+);
+
 
     const getVolatilityColor = (volatility) => {
       if (volatility >= 0.06) return "#f44336"; // High - Red
@@ -87,22 +107,20 @@ Price Change: ${priceChange?.toFixed(2)}%
     };
 
     const getPerformanceIndicator = (change) => {
-      if (typeof change !== "number") return { arrow: "-", color: "gray" };
-      if (change > 0) return { arrow: "▲", color: "green" };
-      if (change < 0) return { arrow: "▼", color: "red" };
-      return { arrow: "-", color: "gray" };
+      if (typeof change !== "number")
+        return <RemoveIcon sx={{ color: "gray", fontSize: 16 }} />;
+      if (change > 0)
+        return <ArrowUpwardIcon sx={{ color: "green", fontSize: 16 }} />;
+      if (change < 0)
+        return <ArrowDownwardIcon sx={{ color: "red", fontSize: 16 }} />;
+      return <RemoveIcon sx={{ color: "gray", fontSize: 16 }} />;
     };
 
     const perf = getPerformanceIndicator(priceChange);
     const barWidth = getBarWidthPercent(volume);
 
     return (
-      <Tooltip
-        key={label}
-        title={<pre>{tooltipText}</pre>}
-        arrow
-        placement="top"
-      >
+      <Tooltip placement="top" title={tooltipText}>
         <Paper
           key={label || dateStr}
           onClick={() => !isFutureDate(date) && onDateSelect(dateStr)}
@@ -154,7 +172,7 @@ Price Change: ${priceChange?.toFixed(2)}%
                 lineHeight: 1.2,
               }}
             >
-              {perf.arrow}
+              {perf}
             </Typography>
           </Box>
 
@@ -181,7 +199,6 @@ Price Change: ${priceChange?.toFixed(2)}%
     const endOfMonth = currentDate.endOf("month");
     const cells = [];
     let day = startOfMonth;
-    console.log({day})
 
     while (day.isSameOrBefore(endOfMonth)) {
       const dateStr = day.format("YYYY-MM-DD");
@@ -363,7 +380,12 @@ Price Change: ${priceChange?.toFixed(2)}%
 
   return (
     <Box mt={2}>
-      <Box display="flex" justifyContent="space-between" alignItems="center">
+      <Box
+        key={view}
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+      >
         <IconButton onClick={handlePrev}>
           <ArrowBack />
         </IconButton>

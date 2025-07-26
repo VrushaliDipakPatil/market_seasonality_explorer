@@ -79,6 +79,7 @@ useEffect(() => {
       <ViewSwitcher view={view} onChange={setView} />
 
       <CalendarView
+        key={view}
         data={volatilityData}
         view={view}
         onDateSelect={handleDateSelect}
