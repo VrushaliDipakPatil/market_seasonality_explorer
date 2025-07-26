@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Grid, Typography, IconButton, Box, Paper } from "@mui/material";
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import dayjs from "dayjs";
@@ -20,9 +20,62 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
   const today = dayjs();
   const [currentDate, setCurrentDate] = useState(today);
 
+  // Zoom state
+  const [scale, setScale] = useState(1);
+  const MIN_SCALE = 0.5;
+  const MAX_SCALE = 2;
+  const touchStartDistRef = useRef(null);
+
+  // Zoom handlers
+  const handleWheelZoom = useCallback((e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const newScale = Math.min(Math.max(scale - e.deltaY * 0.001, MIN_SCALE), MAX_SCALE);
+      setScale(newScale);
+    }
+  }, [scale]);
+
+  const handlePinchZoom = useCallback((e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const [touch1, touch2] = e.touches;
+      const distance = Math.hypot(
+        touch1.pageX - touch2.pageX,
+        touch1.pageY - touch2.pageY
+      );
+
+      if (touchStartDistRef.current == null) {
+        touchStartDistRef.current = distance;
+        return;
+      }
+
+      const scaleFactor = distance / touchStartDistRef.current;
+      const newScale = Math.min(Math.max(scale * scaleFactor, MIN_SCALE), MAX_SCALE);
+      setScale(newScale);
+      touchStartDistRef.current = distance;
+    }
+  }, [scale]);
+
+  useEffect(() => {
+    const container = document.getElementById("calendar-zoom-container");
+
+    if (container) {
+      container.addEventListener("wheel", handleWheelZoom, { passive: false });
+      container.addEventListener("touchmove", handlePinchZoom, { passive: false });
+      container.addEventListener("touchend", () => (touchStartDistRef.current = null));
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener("wheel", handleWheelZoom);
+        container.removeEventListener("touchmove", handlePinchZoom);
+        container.removeEventListener("touchend", () => (touchStartDistRef.current = null));
+      }
+    };
+  }, [handleWheelZoom, handlePinchZoom]);
+
   const isFutureDate = (date) => date.isAfter(today, "day");
-  const isPastLimit = (date) =>
-    date.isBefore(today.subtract(1000, "day"), "day");
+  const isPastLimit = (date) => date.isBefore(today.subtract(1000, "day"), "day");
 
   const handlePrev = useCallback(() => {
     const prevDate =
@@ -63,38 +116,37 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
     const { volatility, volume, priceChange, open, close, high, low } =
       cellData || data[dateStr] || {};
 
-const tooltipText = (
-  <div>
-    <div>Volatility: {volatility?.toFixed(2) ?? "-"}</div>
-    <div>Volume: {volume?.toFixed(2) ?? "-"}</div>
-    <div style={{ display: "flex", alignItems: "center" }}>
-      Performance:&nbsp;
-      {priceChange === 1 ? (
-        <ArrowUpwardIcon fontSize="small"/>
-      ) : priceChange === -1 ? (
-        <ArrowDownwardIcon fontSize="small"/>
-      ) : (
-        <RemoveIcon fontSize="small" />
-      )}
-    </div>
-    <div>Opening Price: {open?.toFixed(2) ?? "-"}</div>
-    <div>Closing Price: {close?.toFixed(2) ?? "-"}</div>
-    <div>
-      High / Low: {high?.toFixed(2) ?? "-"} / {low?.toFixed(2) ?? "-"}
-    </div>
-    <div>
-      Price Change:{" "}
-      {typeof priceChange === "number" ? `${priceChange.toFixed(2)}%` : "-"}
-    </div>
-  </div>
-);
-
+    const tooltipText = (
+      <div>
+        <div>Volatility: {volatility?.toFixed(2) ?? "-"}</div>
+        <div>Volume: {volume?.toFixed(2) ?? "-"}</div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          Performance:&nbsp;
+          {priceChange === 1 ? (
+            <ArrowUpwardIcon fontSize="small" />
+          ) : priceChange === -1 ? (
+            <ArrowDownwardIcon fontSize="small" />
+          ) : (
+            <RemoveIcon fontSize="small" />
+          )}
+        </div>
+        <div>Opening Price: {open?.toFixed(2) ?? "-"}</div>
+        <div>Closing Price: {close?.toFixed(2) ?? "-"}</div>
+        <div>
+          High / Low: {high?.toFixed(2) ?? "-"} / {low?.toFixed(2) ?? "-"}
+        </div>
+        <div>
+          Price Change:{" "}
+          {typeof priceChange === "number" ? `${priceChange.toFixed(2)}%` : "-"}
+        </div>
+      </div>
+    );
 
     const getVolatilityColor = (volatility) => {
-      if (volatility >= 0.06) return "#f44336"; // High - Red
-      if (volatility >= 0.03) return "#ff9800"; // Medium - Orange
-      if (volatility >= 0.01) return "#8bc34a"; // Low - Green
-      return "#e0e0e0"; // Very low / no data - Gray
+      if (volatility >= 0.06) return "#f44336";
+      if (volatility >= 0.03) return "#ff9800";
+      if (volatility >= 0.01) return "#8bc34a";
+      return "#e0e0e0";
     };
 
     const getBarWidthPercent = (volume) => {
@@ -120,9 +172,8 @@ const tooltipText = (
     const barWidth = getBarWidthPercent(volume);
 
     return (
-      <Tooltip placement="top" title={tooltipText}>
+      <Tooltip placement="top" title={tooltipText} key={label || dateStr}>
         <Paper
-          key={label || dateStr}
           onClick={() => !isFutureDate(date) && onDateSelect(dateStr)}
           sx={{
             p: 1,
@@ -145,15 +196,12 @@ const tooltipText = (
             overflow: "hidden",
           }}
         >
-          {/* Top: Label */}
           <Typography
             variant="subtitle2"
             sx={{ fontWeight: 600, whiteSpace: "nowrap" }}
           >
             {label || date.format("DD MMM")}
           </Typography>
-
-          {/* Middle: Volatility, Volume, Arrow */}
           <Box sx={{ width: "100%" }}>
             <Typography variant="caption" sx={{ lineHeight: 1.2 }}>
               Vol: {volatility?.toFixed(2) || "-"}
@@ -175,8 +223,6 @@ const tooltipText = (
               {perf}
             </Typography>
           </Box>
-
-          {/* Bottom: Volume Bar */}
           <Box
             sx={{
               position: "absolute",
@@ -203,7 +249,6 @@ const tooltipText = (
     while (day.isSameOrBefore(endOfMonth)) {
       const dateStr = day.format("YYYY-MM-DD");
       const entry = data[dateStr] || {};
-
       const volatility = entry.volatility || 0;
       const volume = entry.volume || 0;
       const priceChange =
@@ -227,6 +272,7 @@ const tooltipText = (
 
       day = day.add(1, "day");
     }
+
     return cells;
   };
 
@@ -278,14 +324,15 @@ const tooltipText = (
             volatility: avgVol,
             volume: totalVolu,
             priceChange: perf,
-            open: open,
-            close: close,
-            high: high,
-            low: low,
+            open,
+            close,
+            high,
+            low,
           }
         )
       );
     }
+
     return cells.reverse();
   };
 
@@ -296,6 +343,7 @@ const tooltipText = (
     for (let i = 0; i < 12; i++) {
       const monthStart = yearStart.add(i, "month");
       const monthEnd = monthStart.endOf("month");
+
       let monthVol = 0;
       let totalVolu = 0;
       let performance = 0;
@@ -305,11 +353,7 @@ const tooltipText = (
       let high = 0;
       let low = 0;
 
-      for (
-        let d = monthStart;
-        d.isSameOrBefore(monthEnd);
-        d = d.add(1, "day")
-      ) {
+      for (let d = monthStart; d.isSameOrBefore(monthEnd); d = d.add(1, "day")) {
         const dateStr = d.format("YYYY-MM-DD");
         const entry = data[dateStr];
         if (entry) {
@@ -337,10 +381,10 @@ const tooltipText = (
           volatility: avgVol,
           volume: totalVolu,
           priceChange: perf,
-          open: open,
-          close: close,
-          high: high,
-          low: low,
+          open,
+          close,
+          high,
+          low,
         })
       );
     }
@@ -350,10 +394,7 @@ const tooltipText = (
 
   const getTitle = () => {
     if (view === "daily") return currentDate.format("MMMM YYYY");
-    if (view === "weekly") {
-      const endWeek = currentDate.format("DD MMM YYYY");
-      return null;
-    }
+    if (view === "weekly") return null;
     if (view === "monthly") return currentDate.format("YYYY");
     return "";
   };
@@ -380,12 +421,7 @@ const tooltipText = (
 
   return (
     <Box mt={2}>
-      <Box
-        key={view}
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-      >
+      <Box display="flex" justifyContent="space-between" alignItems="center">
         <IconButton onClick={handlePrev}>
           <ArrowBack />
         </IconButton>
@@ -394,9 +430,24 @@ const tooltipText = (
           <ArrowForward />
         </IconButton>
       </Box>
-      <Box display="flex" justifyContent="center" flexWrap="wrap">
+
+      <Box
+        id="calendar-zoom-container"
+        display="flex"
+        justifyContent="center"
+        flexWrap="wrap"
+        sx={{
+          transform: `scale(${scale})`,
+          transformOrigin: "center center",
+          transition: "transform 0.1s ease-out",
+        }}
+      >
         {renderCells()}
       </Box>
+
+      <Typography variant="caption" align="center" display="block" mt={1}>
+        Zoom: {(scale * 100).toFixed(0)}%
+      </Typography>
     </Box>
   );
 };
