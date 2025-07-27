@@ -15,6 +15,7 @@ function App() {
   const [selectedDateData, setSelectedDateData] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [range, setRange] = useState({ start: null, end: null });
+const [selectedMatrix, setSelectedMatrix] = useState("volatility");
 
   useEffect(() => {
     const getData = async () => {
@@ -67,26 +68,26 @@ function App() {
     <Container>
       <Typography variant="h4" mt={2}>Market Seasonality Explorer</Typography>
 
-      <SymbolFilter
-        symbol={symbol}
-        interval={interval}
-        metric={metric}
-        onSymbolChange={setSymbol}
-        onIntervalChange={setInterval}
-        onMetricChange={setMetric}
-      />
+<SymbolFilter
+  symbol={symbol}
+  onChange={setSymbol}
+  interval={interval}
+  onIntervalChange={setInterval}
+  selectedMatrix={selectedMatrix}
+  onMatrixChange={setSelectedMatrix}
+/>
 
       <ViewSwitcher view={view} onChange={setView} />
 
-      <CalendarView
-        key={view}
-        data={volatilityData}
-        view={view}
-        onDateSelect={handleDateSelect}
-        range={range}
-        selectedDate={selectedDate}
-        metric={metric}
-      />
+<CalendarView
+  key={view + interval + selectedMatrix}
+  data={volatilityData}
+  view={view}
+  onDateSelect={handleDateSelect}
+  range={range}
+  selectedDate={selectedDate}
+  selectedMatrix={selectedMatrix}
+/>
 
       <DashboardPanel selectedDateData={selectedDateData} />
     </Container>

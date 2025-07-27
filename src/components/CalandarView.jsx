@@ -16,7 +16,14 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(weekOfYear);
 
-const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
+const CalendarView = ({
+  data,
+  view,
+  onDateSelect,
+  range,
+  selectedDate,
+  selectedMatrix = "volatility",
+}) => {
   const today = dayjs();
   const [currentDate, setCurrentDate] = useState(today);
 
@@ -27,55 +34,76 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
   const touchStartDistRef = useRef(null);
 
   // Zoom handlers
-  const handleWheelZoom = useCallback((e) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const newScale = Math.min(Math.max(scale - e.deltaY * 0.001, MIN_SCALE), MAX_SCALE);
-      setScale(newScale);
-    }
-  }, [scale]);
-
-  const handlePinchZoom = useCallback((e) => {
-    if (e.touches.length === 2) {
-      e.preventDefault();
-      const [touch1, touch2] = e.touches;
-      const distance = Math.hypot(
-        touch1.pageX - touch2.pageX,
-        touch1.pageY - touch2.pageY
-      );
-
-      if (touchStartDistRef.current == null) {
-        touchStartDistRef.current = distance;
-        return;
+  const handleWheelZoom = useCallback(
+    (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const newScale = Math.min(
+          Math.max(scale - e.deltaY * 0.001, MIN_SCALE),
+          MAX_SCALE
+        );
+        setScale(newScale);
       }
+    },
+    [scale]
+  );
 
-      const scaleFactor = distance / touchStartDistRef.current;
-      const newScale = Math.min(Math.max(scale * scaleFactor, MIN_SCALE), MAX_SCALE);
-      setScale(newScale);
-      touchStartDistRef.current = distance;
-    }
-  }, [scale]);
+  const handlePinchZoom = useCallback(
+    (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const [touch1, touch2] = e.touches;
+        const distance = Math.hypot(
+          touch1.pageX - touch2.pageX,
+          touch1.pageY - touch2.pageY
+        );
+
+        if (touchStartDistRef.current == null) {
+          touchStartDistRef.current = distance;
+          return;
+        }
+
+        const scaleFactor = distance / touchStartDistRef.current;
+        const newScale = Math.min(
+          Math.max(scale * scaleFactor, MIN_SCALE),
+          MAX_SCALE
+        );
+        setScale(newScale);
+        touchStartDistRef.current = distance;
+      }
+    },
+    [scale]
+  );
 
   useEffect(() => {
     const container = document.getElementById("calendar-zoom-container");
 
     if (container) {
       container.addEventListener("wheel", handleWheelZoom, { passive: false });
-      container.addEventListener("touchmove", handlePinchZoom, { passive: false });
-      container.addEventListener("touchend", () => (touchStartDistRef.current = null));
+      container.addEventListener("touchmove", handlePinchZoom, {
+        passive: false,
+      });
+      container.addEventListener(
+        "touchend",
+        () => (touchStartDistRef.current = null)
+      );
     }
 
     return () => {
       if (container) {
         container.removeEventListener("wheel", handleWheelZoom);
         container.removeEventListener("touchmove", handlePinchZoom);
-        container.removeEventListener("touchend", () => (touchStartDistRef.current = null));
+        container.removeEventListener(
+          "touchend",
+          () => (touchStartDistRef.current = null)
+        );
       }
     };
   }, [handleWheelZoom, handlePinchZoom]);
 
   const isFutureDate = (date) => date.isAfter(today, "day");
-  const isPastLimit = (date) => date.isBefore(today.subtract(1000, "day"), "day");
+  const isPastLimit = (date) =>
+    date.isBefore(today.subtract(1000, "day"), "day");
 
   const handlePrev = useCallback(() => {
     const prevDate =
@@ -186,7 +214,16 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
               : inRange
               ? "#e6f7ff"
               : getVolatilityColor(volatility),
-            border: isTodayDate ? "2px solid #1976d2" : "1px solid #ccc",
+            border: (() => {
+              if (isTodayDate) return "2px solid #1976d2";
+              if (selectedMatrix === "volatility" && volatility >= 0.06)
+                return "2px solid #d24419ff";
+              if (selectedMatrix === "volume" && volume > 500000)
+                return "2px solid #d2197fff";
+              if (selectedMatrix === "performance" && priceChange === 1)
+                return "2px solid #2519d2ff";
+              return "1px solid #ccc";
+            })(),
             opacity: isFutureDate(date) ? 0.5 : 1,
             position: "relative",
             display: "flex",
@@ -353,7 +390,11 @@ const CalendarView = ({ data, view, onDateSelect, range, selectedDate }) => {
       let high = 0;
       let low = 0;
 
-      for (let d = monthStart; d.isSameOrBefore(monthEnd); d = d.add(1, "day")) {
+      for (
+        let d = monthStart;
+        d.isSameOrBefore(monthEnd);
+        d = d.add(1, "day")
+      ) {
         const dateStr = d.format("YYYY-MM-DD");
         const entry = data[dateStr];
         if (entry) {
