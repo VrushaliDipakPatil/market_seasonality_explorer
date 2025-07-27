@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import CalendarView from "./components/CalandarView";
 import DashboardPanel from "./components/DashboardPanel";
 import ViewSwitcher from "./components/ViewSwitcher";
-import { Container, Typography } from "@mui/material";
+import { Container, Typography, Button } from "@mui/material";
 import SymbolFilter from "./components/symbolFilter";
 import { fetchHistoricalData } from "./services/binanceService";
 
@@ -13,13 +13,12 @@ function App() {
   const [interval, setInterval] = useState("1d");
   const [metric, setMetric] = useState("all");
   const [volatilityData, setVolatilityData] = useState({});
-  const [realTimeData, setRealTimeData] = useState({ timestamps: [], prices: [] }); // ✅ Correct container for WebSocket
-  const [selectedDateData, setSelectedDateData] = useState(null);
+  const [selectedDateData, setSelectedDateData] = useState(null);   // for range chart
+  const [realTimeData, setRealTimeData] = useState(null);           // for live updates
   const [selectedDate, setSelectedDate] = useState(null);
   const [range, setRange] = useState({ start: null, end: null });
   const [selectedMatrix, setSelectedMatrix] = useState("volatility");
 
-  // ✅ Fetch historical market data
   useEffect(() => {
     const getData = async () => {
       const realData = await fetchHistoricalData(symbol, interval, 1000);
@@ -28,7 +27,6 @@ function App() {
     getData();
   }, [symbol, interval]);
 
-  // ✅ WebSocket for real-time price updates
   useEffect(() => {
     const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth`);
     ws.onmessage = (event) => {
@@ -55,7 +53,6 @@ function App() {
     return () => ws.close();
   }, [symbol]);
 
-  // ✅ Handle date selection
   const handleDateSelect = async (date) => {
     if (selectedDate === date) return;
 
@@ -80,8 +77,14 @@ function App() {
 
       setSelectedDateData({ timestamps, prices });
     } else {
-      setSelectedDateData(null); // ✅ Don't show chart for single click
+      setSelectedDateData(null); // Only show if full range
     }
+  };
+
+  const handleClearSelection = () => {
+    setRange({ start: null, end: null });
+    setSelectedDate(null);
+    setSelectedDateData(null);
   };
 
   return (
@@ -109,9 +112,18 @@ function App() {
         selectedMatrix={selectedMatrix}
       />
 
+      <Button
+        onClick={handleClearSelection}
+        variant="outlined"
+        color="secondary"
+        sx={{ mt: 2 }}
+      >
+        Clear Selection
+      </Button>
+
       <DashboardPanel
-        realTimeData={realTimeData}              // ✅ Proper real-time chart data
-        historicalChartData={selectedDateData}   // ✅ Proper selected range chart data
+        realTimeData={realTimeData}
+        historicalChartData={selectedDateData}
       />
     </Container>
   );
