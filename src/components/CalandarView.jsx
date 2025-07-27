@@ -217,11 +217,11 @@ const CalendarView = ({
             border: (() => {
               if (isTodayDate) return "2px solid #1976d2";
               if (selectedMatrix === "volatility" && volatility >= 0.06)
-                return "2px solid #d24419ff";
+                return "4px solid #d24419ff";
               if (selectedMatrix === "volume" && volume > 500000)
-                return "2px solid #d2197fff";
+                return "4px solid #d2197fff";
               if (selectedMatrix === "performance" && priceChange === 1)
-                return "2px solid #2519d2ff";
+                return "4px solid #2519d2ff";
               return "1px solid #ccc";
             })(),
             opacity: isFutureDate(date) ? 0.5 : 1,

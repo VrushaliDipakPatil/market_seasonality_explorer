@@ -112,14 +112,14 @@ function App() {
         selectedMatrix={selectedMatrix}
       />
 
-      <Button
+ {selectedDateData &&     <Button
         onClick={handleClearSelection}
         variant="outlined"
         color="secondary"
         sx={{ mt: 2 }}
       >
         Clear Selection
-      </Button>
+      </Button>}
 
       <DashboardPanel
         realTimeData={realTimeData}
