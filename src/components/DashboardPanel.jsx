@@ -86,7 +86,6 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
   const latestData = useMemo(() => {
     if (!historicalChartData || !historicalChartData.timestamps?.length)
       return null;
-
     const prices = historicalChartData.prices;
     const open = prices[0];
     const close = prices[prices.length - 1];
@@ -97,7 +96,6 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
     const change = (((close - open) / open) * 100).toFixed(2);
     const perf = close > open ? "↑" : close < open ? "↓" : "→";
     const indicators = calculateIndicators(prices);
-
     return {
       open,
       close,
@@ -169,8 +167,17 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
 
     const options = {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { position: "top" },
+      },
+      layout: {
+        padding: {
+          top: 10,
+          bottom: 10,
+          left: 10,
+          right: 10,
+        },
       },
       scales: {
         x: {
@@ -178,6 +185,13 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
           title: {
             display: true,
             text: isDate ? "Date" : "Time",
+            font: { size: 12 },
+          },
+          ticks: {
+            font: { size: 10 },
+            autoSkip: true,
+            maxRotation: 45,
+            minRotation: 0,
           },
         },
         y: {
@@ -185,19 +199,25 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
           title: {
             display: true,
             text: "Price (USD)",
+            font: { size: 12 },
+          },
+          ticks: {
+            font: { size: 10 },
           },
         },
       },
     };
 
     return (
-      <Card sx={{ mt: 2 }}>
+      <Card sx={{ mt: 2, height: 350 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
             {title}
           </Typography>
           {data?.timestamps?.length ? (
-            <Line data={chartData} options={options} />
+            <Box sx={{ height: 280 }}>
+              <Line data={chartData} options={options} />
+            </Box>
           ) : (
             <Typography>No data available</Typography>
           )}
@@ -231,16 +251,7 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
             <MetricCard title="Volatility" value={latestData.volatility} />
           </Grid>
           <Grid item xs={6} sm={3} md={2}>
-            <MetricCard title="Std Dev" value={latestData.indicators?.stdDev} />
-          </Grid>
-          <Grid item xs={6} sm={3} md={2}>
             <MetricCard title="Change %" value={latestData.change + "%"} />
-          </Grid>
-          <Grid item xs={6} sm={3} md={2}>
-            <MetricCard
-              title="vs BTC Benchmark"
-              value={benchmarkData ? benchmarkData + "%" : "-"}
-            />
           </Grid>
         </Grid>
       )}
