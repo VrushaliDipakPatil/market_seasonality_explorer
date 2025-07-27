@@ -6,7 +6,6 @@ import {
   Typography,
   Grid,
   Box,
-  Divider,
 } from "@mui/material";
 import { Line } from "react-chartjs-2";
 import {
@@ -173,9 +172,11 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
 
   return (
     <Box mt={3}>
-    {historicalChartData && <Typography variant="h6" gutterBottom>
-      Selected Date Metrics
-    </Typography>}
+      {historicalChartData && (
+        <Typography variant="h6" gutterBottom>
+          Selected Date Metrics
+        </Typography>
+      )}
       {latestData && (
         <Grid container spacing={2} mb={2}>
           <Grid item xs={6} sm={3} md={2}>
@@ -204,10 +205,11 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
           {renderChart("Real-Time Price Data", realTimeData, false)}
         </Grid>
         <Grid item xs={12} md={6}>
-          {historicalChartData && renderChart("Selected Date Chart", {
-            ...historicalChartData,
-            indicators: latestData?.indicators,
-          }, true)}
+          {historicalChartData &&
+            renderChart("Selected Date Chart", {
+              ...historicalChartData,
+              indicators: latestData?.indicators,
+            }, true)}
         </Grid>
       </Grid>
     </Box>
