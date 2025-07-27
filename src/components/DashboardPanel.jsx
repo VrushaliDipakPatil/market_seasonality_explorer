@@ -1,11 +1,12 @@
 // src/components/DashboardPanel.jsx
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import {
   Card,
   CardContent,
   Typography,
   Grid,
   Box,
+  Divider,
 } from "@mui/material";
 import { Line } from "react-chartjs-2";
 import {
@@ -18,6 +19,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { fetchHistoricalData } from "../services/binanceService";
 
 ChartJS.register(
   LineElement,
@@ -42,21 +44,27 @@ function calculateIndicators(prices) {
 
   const rsi = (() => {
     if (prices.length < 15) return [];
-    const gains = [];
-    const losses = [];
-    for (let i = 1; i < prices.length; i++) {
+    let gains = 0;
+    let losses = 0;
+    for (let i = 1; i < 15; i++) {
       const diff = prices[i] - prices[i - 1];
-      if (diff >= 0) gains.push(diff);
-      else losses.push(-diff);
+      if (diff >= 0) gains += diff;
+      else losses -= diff;
     }
-    const avgGain = gains.reduce((a, b) => a + b, 0) / 14;
-    const avgLoss = losses.reduce((a, b) => a + b, 0) / 14 || 0.01;
+    const avgGain = gains / 14;
+    const avgLoss = losses / 14 || 0.01;
     const rs = avgGain / avgLoss;
     const rsiVal = 100 - 100 / (1 + rs);
     return Array(prices.length).fill(rsiVal);
   })();
 
-  return { ma7, ma14, rsi };
+  const stdDev = (() => {
+    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+    const variance = prices.reduce((sum, p) => sum + Math.pow(p - avg, 2), 0) / prices.length;
+    return Math.sqrt(variance).toFixed(2);
+  })();
+
+  return { ma7, ma14, rsi, stdDev };
 }
 
 function MetricCard({ title, value, color = "primary" }) {
@@ -73,9 +81,12 @@ function MetricCard({ title, value, color = "primary" }) {
 }
 
 function DashboardPanel({ realTimeData, historicalChartData }) {
+  const [benchmarkData, setBenchmarkData] = useState(null);
+
   const latestData = useMemo(() => {
     if (!historicalChartData || !historicalChartData.timestamps?.length)
       return null;
+
     const prices = historicalChartData.prices;
     const open = prices[0];
     const close = prices[prices.length - 1];
@@ -86,6 +97,7 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
     const change = (((close - open) / open) * 100).toFixed(2);
     const perf = close > open ? "↑" : close < open ? "↓" : "→";
     const indicators = calculateIndicators(prices);
+
     return {
       open,
       close,
@@ -97,6 +109,24 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
       perf,
       indicators,
     };
+  }, [historicalChartData]);
+
+  useEffect(() => {
+    const fetchBenchmark = async () => {
+      if (!historicalChartData?.timestamps?.length) return;
+      const start = historicalChartData.timestamps[0];
+      const end = historicalChartData.timestamps[historicalChartData.timestamps.length - 1];
+      const startTime = new Date(start).getTime();
+      const endTime = new Date(end).getTime();
+      const result = await fetchHistoricalData("BTCUSDT", "1d", 1000, startTime, endTime);
+      const timestamps = Object.keys(result).sort();
+      const prices = timestamps.map((d) => result[d]?.close || 0);
+      const open = prices[0];
+      const close = prices[prices.length - 1];
+      const change = (((close - open) / open) * 100).toFixed(2);
+      setBenchmarkData(change);
+    };
+    fetchBenchmark();
   }, [historicalChartData]);
 
   const renderChart = (title, data, isDate) => {
@@ -126,6 +156,12 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
           data: indicators?.ma14 || [],
           borderColor: "#66BB6A",
           borderDash: [2, 2],
+          pointRadius: 0,
+        },
+        {
+          label: "RSI",
+          data: indicators?.rsi || [],
+          borderColor: "#AB47BC",
           pointRadius: 0,
         },
       ],
@@ -195,7 +231,16 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
             <MetricCard title="Volatility" value={latestData.volatility} />
           </Grid>
           <Grid item xs={6} sm={3} md={2}>
+            <MetricCard title="Std Dev" value={latestData.indicators?.stdDev} />
+          </Grid>
+          <Grid item xs={6} sm={3} md={2}>
             <MetricCard title="Change %" value={latestData.change + "%"} />
+          </Grid>
+          <Grid item xs={6} sm={3} md={2}>
+            <MetricCard
+              title="vs BTC Benchmark"
+              value={benchmarkData ? benchmarkData + "%" : "-"}
+            />
           </Grid>
         </Grid>
       )}
@@ -206,10 +251,14 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
         </Grid>
         <Grid item xs={12} md={6}>
           {historicalChartData &&
-            renderChart("Selected Date Chart", {
-              ...historicalChartData,
-              indicators: latestData?.indicators,
-            }, true)}
+            renderChart(
+              "Selected Date Chart",
+              {
+                ...historicalChartData,
+                indicators: latestData?.indicators,
+              },
+              true
+            )}
         </Grid>
       </Grid>
     </Box>
