@@ -6,6 +6,7 @@ import ViewSwitcher from "./components/ViewSwitcher";
 import { Container, Typography, Button } from "@mui/material";
 import SymbolFilter from "./components/symbolFilter";
 import { fetchHistoricalData } from "./services/binanceService";
+import ExportButtons from "./components/ExportButtons";
 
 function App() {
   const [view, setView] = useState("monthly");
@@ -13,8 +14,8 @@ function App() {
   const [interval, setInterval] = useState("1d");
   const [metric, setMetric] = useState("all");
   const [volatilityData, setVolatilityData] = useState({});
-  const [selectedDateData, setSelectedDateData] = useState(null);   // for range chart
-  const [realTimeData, setRealTimeData] = useState(null);           // for live updates
+  const [selectedDateData, setSelectedDateData] = useState(null); // for range chart
+  const [realTimeData, setRealTimeData] = useState(null); // for live updates
   const [selectedDate, setSelectedDate] = useState(null);
   const [range, setRange] = useState({ start: null, end: null });
   const [selectedMatrix, setSelectedMatrix] = useState("volatility");
@@ -28,7 +29,9 @@ function App() {
   }, [symbol, interval]);
 
   useEffect(() => {
-    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth`);
+    const ws = new WebSocket(
+      `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth`
+    );
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -88,8 +91,13 @@ function App() {
   };
 
   return (
-    <Container maxWidth="xl">
-      <Typography variant="h4" mt={2}>Market Seasonality Explorer</Typography>
+    <Container
+      maxWidth="xl"
+    >
+      <div id="export-area" style={{ backgroundColor: "#fff", padding: "16px" }}>
+      <Typography variant="h4" mt={2}>
+        Market Seasonality Explorer
+      </Typography>
 
       <SymbolFilter
         symbol={symbol}
@@ -112,18 +120,29 @@ function App() {
         selectedMatrix={selectedMatrix}
       />
 
- {selectedDateData &&     <Button
-        onClick={handleClearSelection}
-        variant="outlined"
-        color="secondary"
-        sx={{ mt: 2 }}
-      >
-        Clear Selection
-      </Button>}
+      {selectedDateData && (
+        <Button
+          onClick={handleClearSelection}
+          variant="outlined"
+          color="secondary"
+          sx={{ mt: 2 }}
+        >
+          Clear Selection
+        </Button>
+      )}
 
       <DashboardPanel
         realTimeData={realTimeData}
         historicalChartData={selectedDateData}
+      />
+      </div>
+
+      <ExportButtons
+        exportTargetId="export-area"
+        csvData={Object.entries(volatilityData).map(([date, values]) => ({
+          date,
+          ...values,
+        }))}
       />
     </Container>
   );
