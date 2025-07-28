@@ -206,7 +206,7 @@ const CalendarView = ({
           sx={{
             p: 1,
             m: 0.5,
-            width: 100,
+            width: 120,
             height: 120,
             cursor: isFutureDate(date) ? "not-allowed" : "pointer",
             backgroundColor: isSelected

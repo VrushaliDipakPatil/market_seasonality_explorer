@@ -77,7 +77,7 @@ function App() {
     return () => ws.close();
   }, [symbol]);
 
-    const getTheme = () => {
+  const getTheme = () => {
     switch (themeMode) {
       case "highContrast":
         return highContrastTheme;
@@ -141,7 +141,9 @@ function App() {
                   </Button>
                   <Button
                     variant={
-                      themeMode === "colorblindFriendly" ? "contained" : "outlined"
+                      themeMode === "colorblindFriendly"
+                        ? "contained"
+                        : "outlined"
                     }
                     onClick={() => setThemeMode("colorblindFriendly")}
                   >
@@ -158,13 +160,18 @@ function App() {
                 </Box>
               </Grid>
               <Grid item xs={12} md={4}>
-                <Box display="flex" justifyContent={{ xs: "flex-start", md: "flex-end" }}>
+                <Box
+                  display="flex"
+                  justifyContent={{ xs: "flex-start", md: "flex-end" }}
+                >
                   <ExportButtons
                     exportTargetId="export-area"
-                    csvData={Object.entries(volatilityData).map(([date, v]) => ({
-                      date,
-                      ...v,
-                    }))}
+                    csvData={Object.entries(volatilityData).map(
+                      ([date, v]) => ({
+                        date,
+                        ...v,
+                      })
+                    )}
                   />
                 </Box>
               </Grid>
