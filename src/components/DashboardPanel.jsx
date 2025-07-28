@@ -1,12 +1,13 @@
 // src/components/DashboardPanel.jsx
 import React, { useMemo, useEffect, useState } from "react";
+import { useTheme } from "@mui/material/styles";
 import {
   Card,
   CardContent,
   Typography,
   Grid,
   Box,
-  Divider,
+  useMediaQuery,
 } from "@mui/material";
 import { Line } from "react-chartjs-2";
 import {
@@ -81,6 +82,10 @@ function MetricCard({ title, value, color = "primary" }) {
 }
 
 function DashboardPanel({ realTimeData, historicalChartData }) {
+  const isPortrait = useMediaQuery("(orientation: portrait)");
+const theme = useTheme();
+const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+
   const [benchmarkData, setBenchmarkData] = useState(null);
 
   const latestData = useMemo(() => {
@@ -91,7 +96,7 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
     const close = prices[prices.length - 1];
     const high = Math.max(...prices);
     const low = Math.min(...prices);
-    const volume = prices.length * 1000; // mocked volume
+    const volume = prices.length * 1000;
     const volatility = ((high - low) / open).toFixed(2);
     const change = (((close - open) / open) * 100).toFixed(2);
     const perf = close > open ? "↑" : close < open ? "↓" : "→";
@@ -172,12 +177,7 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
         legend: { position: "top" },
       },
       layout: {
-        padding: {
-          top: 10,
-          bottom: 10,
-          left: 10,
-          right: 10,
-        },
+        padding: 10,
       },
       scales: {
         x: {
@@ -209,13 +209,13 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
     };
 
     return (
-      <Card sx={{ mt: 2, height: 350, width: "100%" }}>
+      <Card sx={{ mt: 2, height: isSmallScreen || isPortrait ? 300 : 400, width: "100%" }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
             {title}
           </Typography>
           {data?.timestamps?.length ? (
-            <Box sx={{ height: 280 }}>
+            <Box sx={{ height: isSmallScreen || isPortrait ? 240 : 320 }}>
               <Line data={chartData} options={options} />
             </Box>
           ) : (
@@ -257,10 +257,10 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
       )}
 
       <Grid container spacing={2} sx={{ width: "100%" }}>
-        <Grid item xs={12} sm={6} width={{ xs: "100%", md: "48%" }}>
+        <Grid item xs={12} sm={6}>
           {renderChart("Real-Time Price Data", realTimeData, false)}
         </Grid>
-        <Grid item xs={12} sm={6} width={{ xs: "100%", md: "48%" }}>
+        <Grid item xs={12} sm={6}>
           {historicalChartData &&
             renderChart(
               "Selected Date Chart",
