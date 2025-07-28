@@ -1,12 +1,24 @@
 // src/App.jsx
 import React, { useEffect, useState } from "react";
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  ThemeProvider,
+  CssBaseline,
+} from "@mui/material";
 import CalendarView from "./components/CalandarView";
 import DashboardPanel from "./components/DashboardPanel";
 import ViewSwitcher from "./components/ViewSwitcher";
-import { Container, Typography, Button } from "@mui/material";
 import SymbolFilter from "./components/symbolFilter";
 import { fetchHistoricalData } from "./services/binanceService";
 import ExportButtons from "./components/ExportButtons";
+import {
+  defaultTheme,
+  highContrastTheme,
+  colorblindFriendlyTheme,
+} from "./themes";
 
 function App() {
   const [view, setView] = useState("monthly");
@@ -14,11 +26,20 @@ function App() {
   const [interval, setInterval] = useState("1d");
   const [metric, setMetric] = useState("all");
   const [volatilityData, setVolatilityData] = useState({});
-  const [selectedDateData, setSelectedDateData] = useState(null); // for range chart
-  const [realTimeData, setRealTimeData] = useState(null); // for live updates
+  const [selectedDateData, setSelectedDateData] = useState(null);
+  const [realTimeData, setRealTimeData] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [range, setRange] = useState({ start: null, end: null });
   const [selectedMatrix, setSelectedMatrix] = useState("volatility");
+  const [themeName, setThemeName] = useState("default");
+  
+
+  const currentTheme =
+    themeName === "highContrast"
+      ? highContrastTheme
+      : themeName === "colorblind"
+      ? colorblindFriendlyTheme
+      : defaultTheme;
 
   useEffect(() => {
     const getData = async () => {
@@ -80,7 +101,7 @@ function App() {
 
       setSelectedDateData({ timestamps, prices });
     } else {
-      setSelectedDateData(null); // Only show if full range
+      setSelectedDateData(null);
     }
   };
 
@@ -91,51 +112,72 @@ function App() {
   };
 
   return (
-    <Container
-      maxWidth="xl"
-    >
-      <div id="export-area" style={{ backgroundColor: "#fff", padding: "16px" }}>
-      <Typography variant="h4" mt={2}>
-        Market Seasonality Explorer
-      </Typography>
+    <ThemeProvider theme={currentTheme}>
+      <CssBaseline />
+      <Container>
+        <Box sx={{ width: '100%', px: 2 }}>
+        <Typography variant="h4" mt={2}>
+          Market Seasonality Explorer
+        </Typography>
 
-      <SymbolFilter
-        symbol={symbol}
-        onChange={setSymbol}
-        interval={interval}
-        onIntervalChange={setInterval}
-        selectedMatrix={selectedMatrix}
-        onMatrixChange={setSelectedMatrix}
-      />
+        {/* Theme Switcher */}
+        <Box mt={2} display="flex" gap={2}>
+          <Button
+            variant={themeName === "default" ? "contained" : "outlined"}
+            onClick={() => setThemeName("default")}
+          >
+            Default
+          </Button>
+          <Button
+            variant={themeName === "colorblind" ? "contained" : "outlined"}
+            onClick={() => setThemeName("colorblind")}
+          >
+            Colorblind-Friendly
+          </Button>
+          <Button
+            variant={themeName === "highContrast" ? "contained" : "outlined"}
+            onClick={() => setThemeName("highContrast")}
+          >
+            High Contrast
+          </Button>
+        </Box>
 
-      <ViewSwitcher view={view} onChange={setView} />
+        <SymbolFilter
+          symbol={symbol}
+          onChange={setSymbol}
+          interval={interval}
+          onIntervalChange={setInterval}
+          selectedMatrix={selectedMatrix}
+          onMatrixChange={setSelectedMatrix}
+        />
 
-      <CalendarView
-        key={view + interval + selectedMatrix}
-        data={volatilityData}
-        view={view}
-        onDateSelect={handleDateSelect}
-        range={range}
-        selectedDate={selectedDate}
-        selectedMatrix={selectedMatrix}
-      />
+        <ViewSwitcher view={view} onChange={setView} />
 
-      {selectedDateData && (
-        <Button
-          onClick={handleClearSelection}
-          variant="outlined"
-          color="secondary"
-          sx={{ mt: 2 }}
-        >
-          Clear Selection
-        </Button>
-      )}
+        <CalendarView
+          key={view + interval + selectedMatrix}
+          data={volatilityData}
+          view={view}
+          onDateSelect={handleDateSelect}
+          range={range}
+          selectedDate={selectedDate}
+          selectedMatrix={selectedMatrix}
+        />
 
-      <DashboardPanel
-        realTimeData={realTimeData}
-        historicalChartData={selectedDateData}
-      />
-      </div>
+        {selectedDateData && (
+          <Button
+            onClick={handleClearSelection}
+            variant="outlined"
+            color="secondary"
+            sx={{ mt: 2 }}
+          >
+            Clear Selection
+          </Button>
+        )}
+
+        <DashboardPanel
+          realTimeData={realTimeData}
+          historicalChartData={selectedDateData}
+        />
 
       <ExportButtons
         exportTargetId="export-area"
@@ -144,7 +186,9 @@ function App() {
           ...values,
         }))}
       />
-    </Container>
+      </Box>
+      </Container>
+    </ThemeProvider>
   );
 }
 
