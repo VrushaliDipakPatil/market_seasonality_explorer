@@ -88,7 +88,7 @@ function App() {
   };
 
   return (
-    <Container>
+    <Container maxWidth="xl">
       <Typography variant="h4" mt={2}>Market Seasonality Explorer</Typography>
 
       <SymbolFilter

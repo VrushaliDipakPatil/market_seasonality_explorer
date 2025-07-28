@@ -256,11 +256,11 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
         </Grid>
       )}
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
+      <Grid container spacing={2} sx={{ width: "100%" }}>
+        <Grid item xs={12} sm={6}>
           {renderChart("Real-Time Price Data", realTimeData, false)}
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} sm={6}>
           {historicalChartData &&
             renderChart(
               "Selected Date Chart",
