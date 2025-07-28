@@ -209,7 +209,7 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
     };
 
     return (
-      <Card sx={{ mt: 2, height: 350 }}>
+      <Card sx={{ mt: 2, height: 350, width: "100%" }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
             {title}
@@ -257,10 +257,10 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
       )}
 
       <Grid container spacing={2} sx={{ width: "100%" }}>
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={6} width={{ xs: "100%", md: "48%" }}>
           {renderChart("Real-Time Price Data", realTimeData, false)}
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={6} width={{ xs: "100%", md: "48%" }}>
           {historicalChartData &&
             renderChart(
               "Selected Date Chart",
