@@ -14,6 +14,9 @@ import ViewSwitcher from "./components/ViewSwitcher";
 import SymbolFilter from "./components/symbolFilter";
 import { fetchHistoricalData } from "./services/binanceService";
 import ExportButtons from "./components/ExportButtons";
+import DateRangeSelector from "./components/DateRangeSelector";
+import ComparisonPanel from "./components/ComparisionPanel";
+
 import {
   defaultTheme,
   highContrastTheme,
@@ -32,7 +35,11 @@ function App() {
   const [range, setRange] = useState({ start: null, end: null });
   const [selectedMatrix, setSelectedMatrix] = useState("volatility");
   const [themeName, setThemeName] = useState("default");
-  
+  const [comparisonRanges, setComparisonRanges] = useState({
+    range1: { start: null, end: null },
+    range2: { start: null, end: null },
+  });
+  const [historicalData, setHistoricalData] = useState([]);
 
   const currentTheme =
     themeName === "highContrast"
@@ -45,6 +52,7 @@ function App() {
     const getData = async () => {
       const realData = await fetchHistoricalData(symbol, interval, 1000);
       setVolatilityData(realData);
+      setHistoricalData(realData);
     };
     getData();
   }, [symbol, interval]);
@@ -115,79 +123,157 @@ function App() {
     <ThemeProvider theme={currentTheme}>
       <CssBaseline />
       <Container>
-        <Box sx={{ width: '100%', px: 2 }}>
-          <div id="export-area" style={{ backgroundColor: "#fff", padding: "16px" }}>
-        <Typography variant="h4" mt={2}>
-          Market Seasonality Explorer
-        </Typography>
+        <Box sx={{ width: "100%", px: 2 }}>
+          <div
+            id="export-area"
+            style={{ backgroundColor: "#fff", padding: "16px" }}
+          >
+            <Typography variant="h4" mt={2}>
+              Market Seasonality Explorer
+            </Typography>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              {/* Theme Switcher */}
+              <Box mt={2} display="flex" gap={2}>
+                <Button
+                  variant={themeName === "default" ? "contained" : "outlined"}
+                  onClick={() => setThemeName("default")}
+                >
+                  Default
+                </Button>
+                <Button
+                  variant={
+                    themeName === "colorblind" ? "contained" : "outlined"
+                  }
+                  onClick={() => setThemeName("colorblind")}
+                >
+                  Colorblind-Friendly
+                </Button>
+                <Button
+                  variant={
+                    themeName === "highContrast" ? "contained" : "outlined"
+                  }
+                  onClick={() => setThemeName("highContrast")}
+                >
+                  High Contrast
+                </Button>
+              </Box>
+              <ExportButtons
+                exportTargetId="export-area"
+                csvData={Object.entries(volatilityData).map(
+                  ([date, values]) => ({
+                    date,
+                    ...values,
+                  })
+                )}
+              />
+            </div>
+            <SymbolFilter
+              symbol={symbol}
+              onChange={setSymbol}
+              interval={interval}
+              onIntervalChange={setInterval}
+              selectedMatrix={selectedMatrix}
+              onMatrixChange={setSelectedMatrix}
+            />
 
-        {/* Theme Switcher */}
-        <Box mt={2} display="flex" gap={2}>
-          <Button
-            variant={themeName === "default" ? "contained" : "outlined"}
-            onClick={() => setThemeName("default")}
-          >
-            Default
-          </Button>
-          <Button
-            variant={themeName === "colorblind" ? "contained" : "outlined"}
-            onClick={() => setThemeName("colorblind")}
-          >
-            Colorblind-Friendly
-          </Button>
-          <Button
-            variant={themeName === "highContrast" ? "contained" : "outlined"}
-            onClick={() => setThemeName("highContrast")}
-          >
-            High Contrast
-          </Button>
+            <ViewSwitcher view={view} onChange={setView} />
+
+            <CalendarView
+              key={view + interval + selectedMatrix}
+              data={volatilityData}
+              view={view}
+              onDateSelect={handleDateSelect}
+              range={range}
+              selectedDate={selectedDate}
+              selectedMatrix={selectedMatrix}
+            />
+
+            {selectedDateData && (
+              <Button
+                onClick={handleClearSelection}
+                variant="outlined"
+                color="secondary"
+                sx={{ mt: 2 }}
+              >
+                Clear Selection
+              </Button>
+            )}
+
+            <DashboardPanel
+              realTimeData={realTimeData}
+              historicalChartData={selectedDateData}
+            />
+          </div>
+          <Box mt={2}>
+            <Typography variant="h6">Compare Time Periods</Typography>
+
+            <Box
+              display="flex"
+              flexDirection={{ xs: "column", md: "row" }}
+              gap={4}
+              alignItems="flex-start"
+            >
+              {/* Left Column: Range Selectors */}
+              <Box
+                display="flex"
+                flexDirection="column"
+                gap={2}
+                width={{ xs: "100%", md: "30%" }}
+              >
+                <DateRangeSelector
+                  label="Range 1"
+                  range={comparisonRanges.range1}
+                  onChange={(key, value) =>
+                    setComparisonRanges((prev) => ({
+                      ...prev,
+                      range1: { ...prev.range1, [key]: value },
+                    }))
+                  }
+                />
+                <DateRangeSelector
+                  label="Range 2"
+                  range={comparisonRanges.range2}
+                  onChange={(key, value) =>
+                    setComparisonRanges((prev) => ({
+                      ...prev,
+                      range2: { ...prev.range2, [key]: value },
+                    }))
+                  }
+                />
+              </Box>
+
+              {/* Right Column: Comparison Panel */}
+              <Box width={{ xs: "100%", md: "70%" }}>
+                <ComparisonPanel
+                  data={Object.entries(historicalData).map(
+                    ([date, values]) => ({
+                      date: new Date(date),
+                      ...values,
+                    })
+                  )}
+                  ranges={[
+                    {
+                      start: comparisonRanges.range1.start
+                        ? new Date(comparisonRanges.range1.start)
+                        : null,
+                      end: comparisonRanges.range1.end
+                        ? new Date(comparisonRanges.range1.end)
+                        : null,
+                    },
+                    {
+                      start: comparisonRanges.range2.start
+                        ? new Date(comparisonRanges.range2.start)
+                        : null,
+                      end: comparisonRanges.range2.end
+                        ? new Date(comparisonRanges.range2.end)
+                        : null,
+                    },
+                  ].filter((r) => r.start && r.end)}
+                />
+              </Box>
+            </Box>
+          </Box>
         </Box>
-
-        <SymbolFilter
-          symbol={symbol}
-          onChange={setSymbol}
-          interval={interval}
-          onIntervalChange={setInterval}
-          selectedMatrix={selectedMatrix}
-          onMatrixChange={setSelectedMatrix}
-        />
-
-        <ViewSwitcher view={view} onChange={setView} />
-
-        <CalendarView
-          key={view + interval + selectedMatrix}
-          data={volatilityData}
-          view={view}
-          onDateSelect={handleDateSelect}
-          range={range}
-          selectedDate={selectedDate}
-          selectedMatrix={selectedMatrix}
-        />
-
-        {selectedDateData && (
-          <Button
-            onClick={handleClearSelection}
-            variant="outlined"
-            color="secondary"
-            sx={{ mt: 2 }}
-          >
-            Clear Selection
-          </Button>
-        )}
-
-        <DashboardPanel
-          realTimeData={realTimeData}
-          historicalChartData={selectedDateData}
-        />
-</div>
-      <ExportButtons
-        exportTargetId="export-area"
-        csvData={Object.entries(volatilityData).map(([date, values]) => ({
-          date,
-          ...values,
-        }))}
-      />
-      </Box>
       </Container>
     </ThemeProvider>
   );
