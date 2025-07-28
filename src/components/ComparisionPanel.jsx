@@ -27,18 +27,19 @@ const getAggregatedMetrics = (data, range) => {
 const ComparisonPanel = ({ data, ranges }) => {
   if (!Array.isArray(ranges) || ranges.length === 0) return null;
 
-  return (
-    <Box mt={3} p={2} border={1} borderColor="grey.300" borderRadius={2}>
-      <Typography variant="h6" gutterBottom>
-        📊 Data Comparison
-      </Typography>
-      <Divider sx={{ mb: 2 }} />
+return (
+  <Box mt={3} p={2} border={1} borderColor="grey.300" borderRadius={2}>
+    <Typography variant="h6" gutterBottom>
+      📊 Data Comparison
+    </Typography>
+    <Divider sx={{ mb: 2 }} />
 
+    <Box display="flex" gap={4} flexWrap="wrap">
       {ranges.map((range, index) => {
         const metrics = getAggregatedMetrics(data, range);
 
         return (
-          <Box key={index} mb={2}>
+          <Box key={index} flex={1} minWidth="220px">
             <Typography variant="subtitle1">
               <strong>Range {index + 1}</strong>
             </Typography>
@@ -59,12 +60,13 @@ const ComparisonPanel = ({ data, ranges }) => {
                 No data available for this range.
               </Typography>
             )}
-            {index < ranges.length - 1 && <Divider sx={{ my: 1 }} />}
           </Box>
         );
       })}
     </Box>
-  );
+  </Box>
+);
+
 };
 
 export default ComparisonPanel;
