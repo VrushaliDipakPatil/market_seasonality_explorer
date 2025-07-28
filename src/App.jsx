@@ -116,6 +116,7 @@ function App() {
       <CssBaseline />
       <Container>
         <Box sx={{ width: '100%', px: 2 }}>
+          <div id="export-area" style={{ backgroundColor: "#fff", padding: "16px" }}>
         <Typography variant="h4" mt={2}>
           Market Seasonality Explorer
         </Typography>
@@ -178,7 +179,7 @@ function App() {
           realTimeData={realTimeData}
           historicalChartData={selectedDateData}
         />
-
+</div>
       <ExportButtons
         exportTargetId="export-area"
         csvData={Object.entries(volatilityData).map(([date, values]) => ({

@@ -1,26 +1,60 @@
-// src/utils/exportUtils.js
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
 export const exportAsImage = async (elementId) => {
   const element = document.getElementById(elementId);
-  if (!element) return;
-  const canvas = await html2canvas(element);
-  const dataUrl = canvas.toDataURL("image/png");
-  const link = document.createElement("a");
-  link.href = dataUrl;
-  link.download = "calendar_snapshot.png";
-  link.click();
+  if (!element) {
+    alert("Element not found");
+    return;
+  }
+  try {
+    const canvas = await html2canvas(element, {
+      useCORS: true,
+      backgroundColor: "#fff",
+      scrollX: 0,
+      scrollY: 0,
+    });
+    const dataUrl = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = "calendar_snapshot.png";
+    link.click();
+  } catch (err) {
+    console.error("Image export error:", err);
+    alert("Failed to export as image.");
+  }
 };
 
 export const exportAsPDF = async (elementId) => {
   const element = document.getElementById(elementId);
-  if (!element) return;
-  const canvas = await html2canvas(element);
-  const imgData = canvas.toDataURL("image/png");
-  const pdf = new jsPDF();
-  pdf.addImage(imgData, "PNG", 10, 10, 190, 0);
-  pdf.save("calendar_snapshot.pdf");
+  if (!element) {
+    alert("Element not found");
+    return;
+  }
+  try {
+    const canvas = await html2canvas(element, {
+      useCORS: true,
+      backgroundColor: "#fff",
+      scrollX: 0,
+      scrollY: 0,
+    });
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.save("calendar_snapshot.pdf");
+  } catch (err) {
+    console.error("PDF export error:", err);
+    alert("Failed to export as PDF.");
+  }
 };
 
 export const exportAsCSV = (data) => {
