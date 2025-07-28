@@ -13,6 +13,7 @@ import DashboardPanel from "./components/DashboardPanel";
 import ViewSwitcher from "./components/ViewSwitcher";
 import SymbolFilter from "./components/symbolFilter";
 import { fetchHistoricalData } from "./services/binanceService";
+import ExportButtons from "./components/ExportButtons";
 import {
   defaultTheme,
   highContrastTheme,
@@ -31,6 +32,7 @@ function App() {
   const [range, setRange] = useState({ start: null, end: null });
   const [selectedMatrix, setSelectedMatrix] = useState("volatility");
   const [themeName, setThemeName] = useState("default");
+  
 
   const currentTheme =
     themeName === "highContrast"
@@ -113,6 +115,8 @@ function App() {
     <ThemeProvider theme={currentTheme}>
       <CssBaseline />
       <Container>
+        <Box sx={{ width: '100%', px: 2 }}>
+          <div id="export-area" style={{ backgroundColor: "#fff", padding: "16px" }}>
         <Typography variant="h4" mt={2}>
           Market Seasonality Explorer
         </Typography>
@@ -175,6 +179,15 @@ function App() {
           realTimeData={realTimeData}
           historicalChartData={selectedDateData}
         />
+</div>
+      <ExportButtons
+        exportTargetId="export-area"
+        csvData={Object.entries(volatilityData).map(([date, values]) => ({
+          date,
+          ...values,
+        }))}
+      />
+      </Box>
       </Container>
     </ThemeProvider>
   );

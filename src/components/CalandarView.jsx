@@ -165,7 +165,7 @@ const CalendarView = ({
         </div>
         <div>
           Price Change:{" "}
-          {typeof priceChange === "number" ? `${priceChange.toFixed(2)}%` : "-"}
+    {typeof priceChange === "number" ? `${priceChange.toFixed(2)}%` : "-"}
         </div>
       </div>
     );
@@ -356,7 +356,7 @@ const CalendarView = ({
       cells.push(
         renderCell(
           weekStart,
-          `${weekStart.format("DD MMM")} - ${weekEnd.format("DD MMM")}`,
+`${weekStart.format("DD MMM")} - ${weekEnd.format("DD MMM")}`,
           {
             volatility: avgVol,
             volume: totalVolu,
