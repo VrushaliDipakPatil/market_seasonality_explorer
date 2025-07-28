@@ -28,7 +28,7 @@ const ComparisonPanel = ({ data, ranges }) => {
   if (!Array.isArray(ranges) || ranges.length === 0) return null;
 
   return (
-    <Box mt={3} p={2} border={1} borderColor="grey.300" borderRadius={2} width={"50%"}>
+    <Box mt={3} p={2} border={1} borderColor="grey.300" borderRadius={2}>
       <Typography variant="h6" gutterBottom>
         📊 Data Comparison
       </Typography>
