@@ -242,7 +242,7 @@ function App() {
                   }
                 />
               </Grid>
-              <Grid item xs={12} md={8}>
+              <Grid item xs={12} md={8} mb={6}>
                 <ComparisonPanel
                   data={Object.entries(historicalData).map(([d, v]) => ({
                     date: new Date(d),

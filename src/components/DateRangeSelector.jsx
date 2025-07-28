@@ -11,13 +11,14 @@ const DateRangeSelector = ({ label, range, onChange }) => {
         value={range.start || ""}
         onChange={(e) => onChange("start", e.target.value)}
         size="small"
-        sx={{ mr: 1 }}
+        sx={{ mr: 1}}
       />
       <TextField
         type="date"
         value={range.end || ""}
         onChange={(e) => onChange("end", e.target.value)}
         size="small"
+        sm={{ mt: 1 }}
       />
     </Box>
   );
