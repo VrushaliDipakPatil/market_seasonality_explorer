@@ -17,7 +17,11 @@ const SymbolFilter = ({
     <Box display="flex" gap={2} mt={2}>
       <FormControl fullWidth>
         <InputLabel>Symbol</InputLabel>
-        <Select value={symbol} label="Symbol" onChange={(e) => onChange(e.target.value)}>
+        <Select
+          value={symbol}
+          label="Symbol"
+          onChange={(e) => onChange(e.target.value)}
+        >
           {symbols.map((s) => (
             <MenuItem key={s} value={s}>
               {s}
@@ -28,7 +32,11 @@ const SymbolFilter = ({
 
       <FormControl fullWidth>
         <InputLabel>Interval</InputLabel>
-        <Select value={interval} label="Interval" onChange={(e) => onIntervalChange(e.target.value)}>
+        <Select
+          value={interval}
+          label="Interval"
+          onChange={(e) => onIntervalChange(e.target.value)}
+        >
           {intervals.map((int) => (
             <MenuItem key={int} value={int}>
               {int}
@@ -39,7 +47,11 @@ const SymbolFilter = ({
 
       <FormControl fullWidth>
         <InputLabel>Matrix</InputLabel>
-        <Select value={selectedMatrix} label="Matrix" onChange={(e) => onMatrixChange(e.target.value)}>
+        <Select
+          value={selectedMatrix}
+          label="Matrix"
+          onChange={(e) => onMatrixChange(e.target.value)}
+        >
           {matrices.map((m) => (
             <MenuItem key={m} value={m}>
               {m}

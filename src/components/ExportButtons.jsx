@@ -4,7 +4,7 @@ import { exportAsImage, exportAsPDF, exportAsCSV } from "../utils/exportUtils";
 
 const ExportButtons = ({ exportTargetId, csvData }) => {
   return (
-    <ButtonGroup sx={{ mt: 2 , mb: 2 }}>
+    <ButtonGroup sx={{ mt: 2, mb: 2 }}>
       <Button variant="outlined" onClick={() => exportAsPDF(exportTargetId)}>
         Export PDF
       </Button>

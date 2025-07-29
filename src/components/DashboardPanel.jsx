@@ -1,4 +1,4 @@
-import React, { useMemo} from "react";
+import React, { useMemo } from "react";
 import { useTheme } from "@mui/material/styles";
 import {
   Card,
@@ -60,8 +60,7 @@ function calculateIndicators(prices) {
   const stdDev = (() => {
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
     const variance =
-      prices.reduce((sum, p) => sum + Math.pow(p - avg, 2), 0) /
-      prices.length;
+      prices.reduce((sum, p) => sum + Math.pow(p - avg, 2), 0) / prices.length;
     return Math.sqrt(variance).toFixed(2);
   })();
 
@@ -84,8 +83,8 @@ function MetricCard({ title, value, color = "primary" }) {
 function DashboardPanel({ realTimeData, historicalChartData }) {
   const theme = useTheme();
   const isPortrait = useMediaQuery("(orientation: portrait)");
-const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
-const isStacked = isPortrait || isSmallScreen;
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const isStacked = isPortrait || isSmallScreen;
 
   const latestData = useMemo(() => {
     if (!historicalChartData || !historicalChartData.timestamps?.length)
@@ -231,17 +230,27 @@ const isStacked = isPortrait || isSmallScreen;
         </Grid>
       )}
 
-      <Grid container spacing={2} >
-        <Grid item xs={12} sm={6}     sx={{
-      width: isStacked ? "100%" : "48%",
-      margin: isStacked ? "0 auto" : "0",
-    }}>
+      <Grid container spacing={2}>
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          sx={{
+            width: isStacked ? "100%" : "48%",
+            margin: isStacked ? "0 auto" : "0",
+          }}
+        >
           {renderChart("Real-Time Price Data", realTimeData, false)}
         </Grid>
-        <Grid item xs={12} sm={6}     sx={{
-      width: isStacked ? "100%" : "48%",
-      margin: isStacked ? "0 auto" : "0",
-    }}>
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          sx={{
+            width: isStacked ? "100%" : "48%",
+            margin: isStacked ? "0 auto" : "0",
+          }}
+        >
           {historicalChartData &&
             renderChart(
               "Selected Date Chart",

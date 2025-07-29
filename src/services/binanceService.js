@@ -13,7 +13,9 @@ export const fetchHistoricalData = async (
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Binance API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Binance API error: ${response.status} ${response.statusText}`
+      );
     }
 
     const data = await response.json();
@@ -28,8 +30,11 @@ export const fetchHistoricalData = async (
       const volume = parseFloat(item[5]);
 
       const volatility = parseFloat(((high - low) / open).toFixed(2));
-      const performance = close > open ? "up" : close < open ? "down" : "neutral";
-      const priceChange = parseFloat((((close - open) / open) * 100).toFixed(2));
+      const performance =
+        close > open ? "up" : close < open ? "down" : "neutral";
+      const priceChange = parseFloat(
+        (((close - open) / open) * 100).toFixed(2)
+      );
 
       result[date] = {
         volatility,
@@ -75,4 +80,3 @@ export const fetchIntradayDataForDate = async (
     return { timestamps: [], prices: [] };
   }
 };
-

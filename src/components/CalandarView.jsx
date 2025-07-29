@@ -17,7 +17,8 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(weekOfYear);
 const isFutureDate = (date) => date.isAfter(dayjs(), "day");
-const isPastLimit = (date) => date.isBefore(dayjs().subtract(1000, "day"), "day");
+const isPastLimit = (date) =>
+  date.isBefore(dayjs().subtract(1000, "day"), "day");
 
 const CalendarView = ({
   data,
@@ -161,7 +162,7 @@ const CalendarView = ({
         </div>
         <div>
           Price Change:{" "}
-    {typeof priceChange === "number" ? `${priceChange.toFixed(2)}%` : "-"}
+          {typeof priceChange === "number" ? `${priceChange.toFixed(2)}%` : "-"}
         </div>
       </div>
     );
@@ -352,7 +353,7 @@ const CalendarView = ({
       cells.push(
         renderCell(
           weekStart,
-`${weekStart.format("DD MMM")} - ${weekEnd.format("DD MMM")}`,
+          `${weekStart.format("DD MMM")} - ${weekEnd.format("DD MMM")}`,
           {
             volatility: avgVol,
             volume: totalVolu,
@@ -467,27 +468,27 @@ const CalendarView = ({
           <ArrowForward />
         </IconButton>
       </Box>
-    <motion.div
-      key={`${view}-${currentDate.toISOString()}`}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4 }}
-    >
-      <Box
-        id="calendar-zoom-container"
-        display="flex"
-        justifyContent="center"
-        flexWrap="wrap"
-        sx={{
-          transform: `scale(${scale})`,
-          transformOrigin: "center center",
-          transition: "transform 0.1s ease-out",
-        }}
+      <motion.div
+        key={`${view}-${currentDate.toISOString()}`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.4 }}
       >
-        {renderCells()}
-      </Box>
-</motion.div>
+        <Box
+          id="calendar-zoom-container"
+          display="flex"
+          justifyContent="center"
+          flexWrap="wrap"
+          sx={{
+            transform: `scale(${scale})`,
+            transformOrigin: "center center",
+            transition: "transform 0.1s ease-out",
+          }}
+        >
+          {renderCells()}
+        </Box>
+      </motion.div>
       <Typography variant="caption" align="center" display="block" mt={1}>
         Zoom: {(scale * 100).toFixed(0)}%
       </Typography>
