@@ -19,7 +19,7 @@ const DateRangeSelector = ({ label, range, onChange }) => {
 
       <TextField
         type="date"
-        value={range.start || ""}
+        value={range.start || "mm/dd/yyyy"}
         onChange={(e) => onChange("start", e.target.value)}
         size={isMobile ? undefined : "small"}
         fullWidth
