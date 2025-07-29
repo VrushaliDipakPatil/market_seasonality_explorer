@@ -17,7 +17,7 @@ const DateRangeSelector = ({ label, range, onChange }) => {
         value={range.end || ""}
         onChange={(e) => onChange("end", e.target.value)}
         size="small"
-        sm={{ mt: 1 }}
+        sx={{ mt: 1 }}
       />
     </Box>
   );
