@@ -17,6 +17,7 @@ import SymbolFilter from "./components/symbolFilter";
 import ExportButtons from "./components/ExportButtons";
 import DateRangeSelector from "./components/DateRangeSelector";
 import ComparisonPanel from "./components/ComparisionPanel";
+import SnackbarAlert from "./components/SnackBarAlert";
 
 import {
   defaultTheme,
@@ -43,6 +44,8 @@ function App() {
     range2: { start: null, end: null },
   });
   const [themeMode, setThemeMode] = useState("default");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   // Fetch historical data on symbol / interval change
   useEffect(() => {
@@ -56,26 +59,59 @@ function App() {
 
   // Websocket for real-time
   useEffect(() => {
+    let lastMid = null;
+
     const ws = new WebSocket(
       `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth`
     );
+
     ws.onmessage = (e) => {
       try {
         const d = JSON.parse(e.data);
         const bid = d?.b?.[0]?.[0];
         const ask = d?.a?.[0]?.[0];
+
         if (bid && ask) {
-          const mid = (parseFloat(bid) + parseFloat(ask)) / 2;
+          const bidNum = parseFloat(bid);
+          const askNum = parseFloat(ask);
+          const mid = (bidNum + askNum) / 2;
           const now = new Date().toLocaleTimeString();
+
           setRealTimeData((prev) => ({
             timestamps: [...(prev?.timestamps || []), now].slice(-15),
             prices: [...(prev?.prices || []), mid].slice(-15),
           }));
+
+          const volatility = Math.abs(askNum - bidNum);
+          console.log(`Current volatility: ${volatility.toFixed(2)}`);
+          if (volatility > 2) {
+            showAlert(`Volatility Alert : ${volatility.toFixed(2)}`);
+          }
+
+          if (lastMid !== null) {
+            const priceChange = mid - lastMid;
+            console.log(`Price change: ${priceChange.toFixed(2)}`);
+            if (priceChange > 0) {
+              showAlert(
+                `Performance : Price increased by $${priceChange.toFixed(2)}`
+              );
+            }
+          }
+
+          lastMid = mid;
         }
-      } catch {}
+      } catch (err) {
+        console.error("WebSocket parse error", err);
+      }
     };
+
     return () => ws.close();
   }, [symbol]);
+
+  const showAlert = (message) => {
+    setSnackbarMessage(message);
+    setOpenSnackbar(true);
+  };
 
   const getTheme = () => {
     switch (themeMode) {
@@ -270,6 +306,11 @@ function App() {
               </Grid>
             </Grid>
           </Box>
+          <SnackbarAlert
+            open={openSnackbar}
+            message={snackbarMessage}
+            onClose={() => setOpenSnackbar(false)}
+          />
         </Box>
       </Container>
     </ThemeProvider>
