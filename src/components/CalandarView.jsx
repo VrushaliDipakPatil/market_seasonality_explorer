@@ -10,6 +10,7 @@ import { Tooltip } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import RemoveIcon from "@mui/icons-material/Remove";
+import { motion } from "framer-motion";
 
 dayjs.extend(isToday);
 dayjs.extend(isSameOrBefore);
@@ -471,7 +472,13 @@ const CalendarView = ({
           <ArrowForward />
         </IconButton>
       </Box>
-
+    <motion.div
+      key={`${view}-${currentDate.toISOString()}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.4 }}
+    >
       <Box
         id="calendar-zoom-container"
         display="flex"
@@ -485,7 +492,7 @@ const CalendarView = ({
       >
         {renderCells()}
       </Box>
-
+</motion.div>
       <Typography variant="caption" align="center" display="block" mt={1}>
         Zoom: {(scale * 100).toFixed(0)}%
       </Typography>

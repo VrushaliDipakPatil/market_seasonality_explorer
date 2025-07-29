@@ -61,7 +61,9 @@ function calculateIndicators(prices) {
 
   const stdDev = (() => {
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-    const variance = prices.reduce((sum, p) => sum + Math.pow(p - avg, 2), 0) / prices.length;
+    const variance =
+      prices.reduce((sum, p) => sum + Math.pow(p - avg, 2), 0) /
+      prices.length;
     return Math.sqrt(variance).toFixed(2);
   })();
 
@@ -82,10 +84,10 @@ function MetricCard({ title, value, color = "primary" }) {
 }
 
 function DashboardPanel({ realTimeData, historicalChartData }) {
+  const theme = useTheme();
   const isPortrait = useMediaQuery("(orientation: portrait)");
-const theme = useTheme();
 const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
-
+const isStacked = isPortrait || isSmallScreen;
   const [benchmarkData, setBenchmarkData] = useState(null);
 
   const latestData = useMemo(() => {
@@ -118,10 +120,19 @@ const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
     const fetchBenchmark = async () => {
       if (!historicalChartData?.timestamps?.length) return;
       const start = historicalChartData.timestamps[0];
-      const end = historicalChartData.timestamps[historicalChartData.timestamps.length - 1];
+      const end =
+        historicalChartData.timestamps[
+          historicalChartData.timestamps.length - 1
+        ];
       const startTime = new Date(start).getTime();
       const endTime = new Date(end).getTime();
-      const result = await fetchHistoricalData("BTCUSDT", "1d", 1000, startTime, endTime);
+      const result = await fetchHistoricalData(
+        "BTCUSDT",
+        "1d",
+        1000,
+        startTime,
+        endTime
+      );
       const timestamps = Object.keys(result).sort();
       const prices = timestamps.map((d) => result[d]?.close || 0);
       const open = prices[0];
@@ -171,24 +182,24 @@ const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
     };
 
     const options = {
+      animation: {
+        duration: 800,
+        easing: "easeOutQuart",
+      },
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
         legend: { position: "top" },
       },
-      layout: {
-        padding: 10,
-      },
+      layout: { padding: 10 },
       scales: {
         x: {
           display: true,
           title: {
             display: true,
             text: isDate ? "Date" : "Time",
-            font: { size: 12 },
           },
           ticks: {
-            font: { size: 10 },
             autoSkip: true,
             maxRotation: 45,
             minRotation: 0,
@@ -196,31 +207,31 @@ const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
         },
         y: {
           display: true,
-          title: {
-            display: true,
-            text: "Price (USD)",
-            font: { size: 12 },
-          },
-          ticks: {
-            font: { size: 10 },
-          },
+          title: { display: true, text: "Price (USD)" },
         },
       },
     };
 
     return (
-      <Card sx={{ mt: 2, height: isSmallScreen || isPortrait ? 300 : 400, width: "100%" }}>
-        <CardContent>
+      <Card sx={{ mt: 2, width: "100%" }}>
+        <CardContent sx={{ width: "100%" }}>
           <Typography variant="h6" gutterBottom>
             {title}
           </Typography>
-          {data?.timestamps?.length ? (
-            <Box sx={{ height: isSmallScreen || isPortrait ? 240 : 320 }}>
-              <Line data={chartData} options={options} />
-            </Box>
-          ) : (
-            <Typography>No data available</Typography>
-          )}
+          <Box
+            sx={{
+              width: "100%",
+              height: {
+                xs: 300,
+                sm: 400,
+                md: 500,
+                lg: 600,
+              },
+              minHeight: 240,
+            }}
+          >
+            <Line data={chartData} options={options} />
+          </Box>
         </CardContent>
       </Card>
     );
@@ -235,32 +246,32 @@ const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
       )}
       {latestData && (
         <Grid container spacing={2} mb={2}>
-          <Grid item xs={6} sm={3} md={2}>
-            <MetricCard title="Open" value={latestData.open?.toFixed(2)} />
-          </Grid>
-          <Grid item xs={6} sm={3} md={2}>
-            <MetricCard title="Close" value={latestData.close?.toFixed(2)} />
-          </Grid>
-          <Grid item xs={6} sm={3} md={2}>
-            <MetricCard title="High" value={latestData.high?.toFixed(2)} />
-          </Grid>
-          <Grid item xs={6} sm={3} md={2}>
-            <MetricCard title="Low" value={latestData.low?.toFixed(2)} />
-          </Grid>
-          <Grid item xs={6} sm={3} md={2}>
-            <MetricCard title="Volatility" value={latestData.volatility} />
-          </Grid>
-          <Grid item xs={6} sm={3} md={2}>
-            <MetricCard title="Change %" value={latestData.change + "%"} />
-          </Grid>
+          {[
+            ["Open", latestData.open?.toFixed(2)],
+            ["Close", latestData.close?.toFixed(2)],
+            ["High", latestData.high?.toFixed(2)],
+            ["Low", latestData.low?.toFixed(2)],
+            ["Volatility", latestData.volatility],
+            ["Change %", latestData.change + "%"],
+          ].map(([label, value]) => (
+            <Grid item xs={6} sm={3} md={2} key={label}>
+              <MetricCard title={label} value={value} />
+            </Grid>
+          ))}
         </Grid>
       )}
 
-      <Grid container spacing={2} sx={{ width: "100%" }}>
-        <Grid item xs={12} sm={6}>
+      <Grid container spacing={2} >
+        <Grid item xs={12} sm={6}     sx={{
+      width: isStacked ? "100%" : "48%",
+      margin: isStacked ? "0 auto" : "0",
+    }}>
           {renderChart("Real-Time Price Data", realTimeData, false)}
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={6}     sx={{
+      width: isStacked ? "100%" : "48%",
+      margin: isStacked ? "0 auto" : "0",
+    }}>
           {historicalChartData &&
             renderChart(
               "Selected Date Chart",

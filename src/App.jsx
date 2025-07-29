@@ -9,7 +9,7 @@ import {
   CssBaseline,
   Grid,
 } from "@mui/material";
-
+import { motion } from "framer-motion";
 import CalendarView from "./components/CalandarView";
 import DashboardPanel from "./components/DashboardPanel";
 import ViewSwitcher from "./components/ViewSwitcher";
@@ -193,10 +193,17 @@ function App() {
       <CssBaseline />
       <Container maxWidth="xl">
         <Box sx={{ width: "100%", px: { xs: 1, sm: 2 } }}>
+                      <motion.div
+  initial={{ opacity: 0, y: 30 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5 }}
+>
           <Box id="export-area" sx={{ bgcolor: "background.paper", p: 2 }}>
             <Typography variant="h4" gutterBottom>
               Market Seasonality Explorer
             </Typography>
+
+
 
             <Grid container spacing={2} alignItems="center">
               <Grid item xs={12} md={8}>
@@ -337,13 +344,16 @@ function App() {
                 />
               </Grid>
             </Grid>
+            
           </Box>
+          
           <SnackbarAlert
             open={alert.open}
             message={alert.message}
             severity={alert.severity}
             onClose={() => setAlert({ ...alert, open: false })}
           />
+      </motion.div>    
         </Box>
       </Container>
     </ThemeProvider>
