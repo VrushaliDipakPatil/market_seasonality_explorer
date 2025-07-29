@@ -82,13 +82,13 @@ function App() {
           }));
 
           const volatility = Math.abs(askNum - bidNum);
-          if (volatility > 2) {
+          if (volatility > 5) {
             showAlert(`Volatility Alert : ${volatility.toFixed(2)}`);
           }
 
           if (lastMid !== null) {
             const priceChange = mid - lastMid;
-            if (priceChange > 0) {
+            if (priceChange > 2) {
               showAlert(
                 `Performance : Price increased by $${priceChange.toFixed(2)}`
               );
