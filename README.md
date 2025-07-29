@@ -1,10 +1,10 @@
 # Market Seasonality Explorer
 
-An interactive web application for visualizing market seasonality patterns, volatility heatmaps, liquidity indicators, and performance metrics using real-time and historical data from Binance. Built with **React**, **MUI**, and **Chart.js**.
+An interactive web application for visualizing market seasonality patterns, volatility heatmaps, liquidity indicators, and performance metrics using real-time and historical data for 1000 days from Binance. Built with **React**, **MUI**, and **Chart.js**.
 
 ---
 
-##  Demo Video
+##  Demo Video 
 
  [Insert your Loom/YouTube video link here demonstrating the functionality and code walkthrough]
 

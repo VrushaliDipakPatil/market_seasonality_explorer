@@ -18,7 +18,7 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(weekOfYear);
 const isFutureDate = (date) => date.isAfter(dayjs(), "day");
 const isPastLimit = (date) =>
-  date.isBefore(dayjs().subtract(1000, "day"), "day");
+  date.isBefore(dayjs().subtract(10000, "day"), "day");
 
 const CalendarView = ({
   data,
