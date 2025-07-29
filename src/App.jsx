@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useEffect, useState } from "react";
 import {
   Container,
@@ -28,7 +27,6 @@ import {
 import { fetchHistoricalData } from "./services/binanceService";
 
 function App() {
-  // Other states
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [interval, setInterval] = useState("1d");
   const [view, setView] = useState("monthly");
@@ -50,7 +48,6 @@ function App() {
     severity: "info",
   });
 
-  // Fetch historical data on symbol / interval change
   useEffect(() => {
     const load = async () => {
       const data = await fetchHistoricalData(symbol, interval, 1000);
@@ -60,7 +57,6 @@ function App() {
     load();
   }, [symbol, interval]);
 
-  // Websocket for real-time
   useEffect(() => {
     let lastMid = null;
 
@@ -111,16 +107,14 @@ function App() {
     return () => ws.close();
   }, [symbol]);
 
-  // Detect recurring patterns in historical data
   useEffect(() => {
     if (!historicalData || Object.keys(historicalData).length === 0) return;
 
-    const threshold = 5; // e.g., high volatility threshold
+    const threshold = 5; 
     const patternCount = {};
 
-    // Group by MM-DD (calendar date, ignore year)
     for (const [dateStr, data] of Object.entries(historicalData)) {
-      const [yyyy, mm, dd] = dateStr.split("-");
+      const [ mm, dd] = dateStr.split("-");
       const key = `${mm}-${dd}`;
 
       if (data?.volatility && data.volatility > threshold) {
@@ -128,9 +122,8 @@ function App() {
       }
     }
 
-    // Detect if any date repeatedly crosses threshold
     const recurring = Object.entries(patternCount).filter(
-      ([, count]) => count >= 3 // at least 3 occurrences
+      ([, count]) => count >= 3 
     );
 
     if (recurring.length > 0) {
@@ -156,7 +149,6 @@ function App() {
     }
   };
 
-  // Handle selecting a date cell
   const handleDateSelect = async (date) => {
     if (selectedDate === date) return;
     setSelectedDate(date);

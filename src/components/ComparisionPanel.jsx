@@ -1,8 +1,5 @@
-// src/components/ComparisonPanel.jsx
-import React from "react";
 import { Box, Typography, Divider } from "@mui/material";
 
-// Utility function to get aggregated metrics for a date range
 const getAggregatedMetrics = (data, range) => {
   if (!Array.isArray(data)) return null;
 
@@ -30,7 +27,7 @@ const ComparisonPanel = ({ data, ranges }) => {
 return (
   <Box mt={3} p={2} border={1} borderColor="grey.300" borderRadius={2}>
     <Typography variant="h6" gutterBottom>
-      📊 Data Comparison
+       Data Comparison
     </Typography>
     <Divider sx={{ mb: 2 }} />
 

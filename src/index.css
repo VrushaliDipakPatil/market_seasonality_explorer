@@ -1,11 +1,11 @@
-/* index.css or App.css */
+
 
 html, body, #root {
   width: 100%;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  overflow-x: hidden; /* Prevent horizontal scrolling on all devices */
+  overflow-x: hidden;
 }
 
 body {
@@ -15,26 +15,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ensure container responsiveness */
 .MuiContainer-root {
   max-width: 100% !important;
   padding-left: 16px;
   padding-right: 16px;
 }
 
-/* Grid layout adjustments */
 .MuiGrid-container {
   width: 100% !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
 }
 
-/* Code font style */
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-/* Responsive tweaks */
 @media screen and (max-width: 768px) {
   .MuiContainer-root {
     padding-left: 8px;
@@ -42,7 +38,6 @@ code {
   }
 }
 
-/* Prevent horizontal scroll due to charts, tooltips or long elements */
 * {
   box-sizing: border-box;
   max-width: 100%;

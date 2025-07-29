@@ -1,5 +1,4 @@
-// src/components/DashboardPanel.jsx
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo} from "react";
 import { useTheme } from "@mui/material/styles";
 import {
   Card,
@@ -20,7 +19,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { fetchHistoricalData } from "../services/binanceService";
 
 ChartJS.register(
   LineElement,
@@ -88,7 +86,6 @@ function DashboardPanel({ realTimeData, historicalChartData }) {
   const isPortrait = useMediaQuery("(orientation: portrait)");
 const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 const isStacked = isPortrait || isSmallScreen;
-  const [benchmarkData, setBenchmarkData] = useState(null);
 
   const latestData = useMemo(() => {
     if (!historicalChartData || !historicalChartData.timestamps?.length)
@@ -114,33 +111,6 @@ const isStacked = isPortrait || isSmallScreen;
       perf,
       indicators,
     };
-  }, [historicalChartData]);
-
-  useEffect(() => {
-    const fetchBenchmark = async () => {
-      if (!historicalChartData?.timestamps?.length) return;
-      const start = historicalChartData.timestamps[0];
-      const end =
-        historicalChartData.timestamps[
-          historicalChartData.timestamps.length - 1
-        ];
-      const startTime = new Date(start).getTime();
-      const endTime = new Date(end).getTime();
-      const result = await fetchHistoricalData(
-        "BTCUSDT",
-        "1d",
-        1000,
-        startTime,
-        endTime
-      );
-      const timestamps = Object.keys(result).sort();
-      const prices = timestamps.map((d) => result[d]?.close || 0);
-      const open = prices[0];
-      const close = prices[prices.length - 1];
-      const change = (((close - open) / open) * 100).toFixed(2);
-      setBenchmarkData(change);
-    };
-    fetchBenchmark();
   }, [historicalChartData]);
 
   const renderChart = (title, data, isDate) => {

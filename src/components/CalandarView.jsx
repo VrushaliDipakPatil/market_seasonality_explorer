@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Grid, Typography, IconButton, Box, Paper } from "@mui/material";
+import { Typography, IconButton, Box, Paper } from "@mui/material";
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import dayjs from "dayjs";
 import isToday from "dayjs/plugin/isToday";
@@ -16,6 +16,8 @@ dayjs.extend(isToday);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(weekOfYear);
+const isFutureDate = (date) => date.isAfter(dayjs(), "day");
+const isPastLimit = (date) => date.isBefore(dayjs().subtract(1000, "day"), "day");
 
 const CalendarView = ({
   data,
@@ -27,14 +29,11 @@ const CalendarView = ({
 }) => {
   const today = dayjs();
   const [currentDate, setCurrentDate] = useState(today);
-
-  // Zoom state
   const [scale, setScale] = useState(1);
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 2;
   const touchStartDistRef = useRef(null);
 
-  // Zoom handlers
   const handleWheelZoom = useCallback(
     (e) => {
       if (e.ctrlKey || e.metaKey) {
@@ -101,10 +100,6 @@ const CalendarView = ({
       }
     };
   }, [handleWheelZoom, handlePinchZoom]);
-
-  const isFutureDate = (date) => date.isAfter(today, "day");
-  const isPastLimit = (date) =>
-    date.isBefore(today.subtract(1000, "day"), "day");
 
   const handlePrev = useCallback(() => {
     const prevDate =

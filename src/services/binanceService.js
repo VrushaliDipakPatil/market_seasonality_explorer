@@ -1,5 +1,3 @@
-// src/services/binanceService.js
-
 export const fetchHistoricalData = async (
   symbol = "BTCUSDT",
   interval = "1d",
