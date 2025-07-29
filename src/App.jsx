@@ -44,8 +44,11 @@ function App() {
     range2: { start: null, end: null },
   });
   const [themeMode, setThemeMode] = useState("default");
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [alert, setAlert] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
 
   // Fetch historical data on symbol / interval change
   useEffect(() => {
@@ -108,9 +111,38 @@ function App() {
     return () => ws.close();
   }, [symbol]);
 
-  const showAlert = (message) => {
-    setSnackbarMessage(message);
-    setOpenSnackbar(true);
+  // Detect recurring patterns in historical data
+  useEffect(() => {
+    if (!historicalData || Object.keys(historicalData).length === 0) return;
+
+    const threshold = 5; // e.g., high volatility threshold
+    const patternCount = {};
+
+    // Group by MM-DD (calendar date, ignore year)
+    for (const [dateStr, data] of Object.entries(historicalData)) {
+      const [yyyy, mm, dd] = dateStr.split("-");
+      const key = `${mm}-${dd}`;
+
+      if (data?.volatility && data.volatility > threshold) {
+        patternCount[key] = (patternCount[key] || 0) + 1;
+      }
+    }
+
+    // Detect if any date repeatedly crosses threshold
+    const recurring = Object.entries(patternCount).filter(
+      ([, count]) => count >= 3 // at least 3 occurrences
+    );
+
+    if (recurring.length > 0) {
+      const patternDates = recurring.map(([date]) => date).join(", ");
+      showAlert(
+        `📈 Recurring Pattern: High volatility often seen on these dates — ${patternDates}`
+      );
+    }
+  }, [historicalData]);
+
+  const showAlert = (message, severity = "info") => {
+    setAlert({ open: true, message, severity });
   };
 
   const getTheme = () => {
@@ -307,9 +339,10 @@ function App() {
             </Grid>
           </Box>
           <SnackbarAlert
-            open={openSnackbar}
-            message={snackbarMessage}
-            onClose={() => setOpenSnackbar(false)}
+            open={alert.open}
+            message={alert.message}
+            severity={alert.severity}
+            onClose={() => setAlert({ ...alert, open: false })}
           />
         </Box>
       </Container>

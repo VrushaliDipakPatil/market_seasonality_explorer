@@ -4,7 +4,7 @@ import { Snackbar, Alert, Slide } from "@mui/material";
 
 const SlideUp = (props) => <Slide {...props} direction="up" />;
 
-const SnackbarAlert = ({ open, message, onClose }) => {
+const SnackbarAlert = ({ open, message, onClose, severity = "info" }) => {
   return (
     <Snackbar
       open={open}
@@ -22,7 +22,7 @@ const SnackbarAlert = ({ open, message, onClose }) => {
     >
       <Alert
         onClose={onClose}
-        severity="info"
+        severity={severity}
         variant="filled"
         sx={{
           width: "100%",
