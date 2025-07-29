@@ -13,20 +13,21 @@ const DateRangeSelector = ({ label, range, onChange }) => {
       flexDirection={{ xs: "column", sm: "row" }}
       alignItems="center"
     >
-      <Typography sx={{ mr: { sm: 2 }, mb: { xs: 1, sm: 0 } }}>
+      <Typography sx={{ mr: { sm: 2 }, mb: { xs: 1, sm: 0 }, whiteSpace: 'nowrap' }}>
         {label}
       </Typography>
 
       <TextField
         type="date"
-        value={range.start || "mm/dd/yyyy"}
+        value={range.start || ""}
         onChange={(e) => onChange("start", e.target.value)}
         size={isMobile ? undefined : "small"}
         fullWidth
         sx={{
           mr: { sm: 1 },
           mb: { xs: 1, sm: 0 },
-          minWidth: { sm: 160 },
+          minWidth: { sm: 160, xs: "100%" },
+          mt: { xs: 1, sm: 1 },
         }}
       />
 
