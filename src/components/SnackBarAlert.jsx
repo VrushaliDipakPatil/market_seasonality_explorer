@@ -1,22 +1,16 @@
 // src/components/SnackbarAlert.jsx
 import React from "react";
-import { Snackbar, Alert, Slide } from "@mui/material";
-
-const SlideUp = (props) => <Slide {...props} direction="up" />;
+import { Snackbar, Alert } from "@mui/material";
 
 const SnackbarAlert = ({ open, message, onClose, severity = "info" }) => {
   return (
     <Snackbar
       open={open}
       onClose={onClose}
-      TransitionComponent={SlideUp}
       autoHideDuration={4000}
-      anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      anchorOrigin={{ vertical: "top", horizontal: "right" }}
       sx={{
-        width: "100%",
-        left: 0,
-        right: 0,
-        bottom: 0,
+        width: "30%",
         maxWidth: "100vw",
       }}
     >
