@@ -17,6 +17,8 @@ import ExportButtons from "./components/ExportButtons";
 import DateRangeSelector from "./components/DateRangeSelector";
 import ComparisonPanel from "./components/ComparisionPanel";
 import SnackbarAlert from "./components/SnackBarAlert";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 import {
   defaultTheme,
@@ -180,171 +182,175 @@ function App() {
 
   return (
     <ThemeProvider theme={getTheme()}>
-      <CssBaseline />
-      <Container maxWidth="xl">
-        <Box sx={{ width: "100%", px: { xs: 1, sm: 2 } }}>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Box id="export-area" sx={{ bgcolor: "background.paper", p: 2 }}>
-              <Typography variant="h4" gutterBottom>
-                Market Seasonality Explorer
-              </Typography>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <CssBaseline />
+        <Container maxWidth="xl">
+          <Box sx={{ width: "100%", px: { xs: 1, sm: 2 } }}>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Box id="export-area" sx={{ bgcolor: "background.paper", p: 2 }}>
+                <Typography variant="h4" gutterBottom>
+                  Market Seasonality Explorer
+                </Typography>
 
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={8}>
-                  <Box display="flex" flexWrap="wrap" gap={1}>
-                    <Button
-                      variant={
-                        themeMode === "default" ? "contained" : "outlined"
-                      }
-                      onClick={() => setThemeMode("default")}
+                <Grid container spacing={2} alignItems="center">
+                  <Grid item xs={12} md={8}>
+                    <Box display="flex" flexWrap="wrap" gap={1}>
+                      <Button
+                        variant={
+                          themeMode === "default" ? "contained" : "outlined"
+                        }
+                        onClick={() => setThemeMode("default")}
+                      >
+                        Default
+                      </Button>
+                      <Button
+                        variant={
+                          themeMode === "colorblindFriendly"
+                            ? "contained"
+                            : "outlined"
+                        }
+                        onClick={() => setThemeMode("colorblindFriendly")}
+                      >
+                        Colorblind‑Friendly
+                      </Button>
+                      <Button
+                        variant={
+                          themeMode === "highContrast"
+                            ? "contained"
+                            : "outlined"
+                        }
+                        onClick={() => setThemeMode("highContrast")}
+                      >
+                        High Contrast
+                      </Button>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Box
+                      display="flex"
+                      justifyContent={{ xs: "flex-start", md: "flex-end" }}
                     >
-                      Default
-                    </Button>
-                    <Button
-                      variant={
-                        themeMode === "colorblindFriendly"
-                          ? "contained"
-                          : "outlined"
-                      }
-                      onClick={() => setThemeMode("colorblindFriendly")}
-                    >
-                      Colorblind‑Friendly
-                    </Button>
-                    <Button
-                      variant={
-                        themeMode === "highContrast" ? "contained" : "outlined"
-                      }
-                      onClick={() => setThemeMode("highContrast")}
-                    >
-                      High Contrast
-                    </Button>
-                  </Box>
+                      <ExportButtons
+                        exportTargetId="export-area"
+                        csvData={Object.entries(volatilityData).map(
+                          ([date, v]) => ({
+                            date,
+                            ...v,
+                          })
+                        )}
+                      />
+                    </Box>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} md={4}>
-                  <Box
-                    display="flex"
-                    justifyContent={{ xs: "flex-start", md: "flex-end" }}
+
+                <SymbolFilter
+                  symbol={symbol}
+                  onChange={setSymbol}
+                  interval={interval}
+                  onIntervalChange={setInterval}
+                  selectedMatrix={selectedMatrix}
+                  onMatrixChange={setSelectedMatrix}
+                />
+
+                <ViewSwitcher view={view} onChange={setView} />
+
+                <CalendarView
+                  key={view + interval + selectedMatrix}
+                  data={volatilityData}
+                  view={view}
+                  onDateSelect={handleDateSelect}
+                  range={range}
+                  selectedDate={selectedDate}
+                  selectedMatrix={selectedMatrix}
+                />
+
+                {selectedDateData && (
+                  <Button
+                    onClick={handleClearSelection}
+                    variant="outlined"
+                    color="secondary"
+                    sx={{ mt: 2 }}
                   >
-                    <ExportButtons
-                      exportTargetId="export-area"
-                      csvData={Object.entries(volatilityData).map(
-                        ([date, v]) => ({
-                          date,
-                          ...v,
-                        })
-                      )}
+                    Clear Selection
+                  </Button>
+                )}
+
+                <DashboardPanel
+                  realTimeData={realTimeData}
+                  historicalChartData={selectedDateData}
+                />
+              </Box>
+
+              <Box mt={4}>
+                <Typography variant="h6" gutterBottom>
+                  Compare Time Periods
+                </Typography>
+                <Grid container spacing={4}>
+                  <Grid item xs={12} md={4}>
+                    <DateRangeSelector
+                      label="Range 1"
+                      range={comparisonRanges.range1}
+                      onChange={(k, v) =>
+                        setComparisonRanges((prev) => ({
+                          ...prev,
+                          range1: { ...prev.range1, [k]: v },
+                        }))
+                      }
                     />
-                  </Box>
+                    <DateRangeSelector
+                      label="Range 2"
+                      range={comparisonRanges.range2}
+                      onChange={(k, v) =>
+                        setComparisonRanges((prev) => ({
+                          ...prev,
+                          range2: { ...prev.range2, [k]: v },
+                        }))
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={8} mb={6}>
+                    <ComparisonPanel
+                      data={Object.entries(historicalData).map(([d, v]) => ({
+                        date: new Date(d),
+                        ...v,
+                      }))}
+                      ranges={[
+                        {
+                          start: comparisonRanges.range1.start
+                            ? new Date(comparisonRanges.range1.start)
+                            : null,
+                          end: comparisonRanges.range1.end
+                            ? new Date(comparisonRanges.range1.end)
+                            : null,
+                        },
+                        {
+                          start: comparisonRanges.range2.start
+                            ? new Date(comparisonRanges.range2.start)
+                            : null,
+                          end: comparisonRanges.range2.end
+                            ? new Date(comparisonRanges.range2.end)
+                            : null,
+                        },
+                      ].filter((r) => r.start && r.end)}
+                    />
+                  </Grid>
                 </Grid>
-              </Grid>
+              </Box>
 
-              <SymbolFilter
-                symbol={symbol}
-                onChange={setSymbol}
-                interval={interval}
-                onIntervalChange={setInterval}
-                selectedMatrix={selectedMatrix}
-                onMatrixChange={setSelectedMatrix}
+              <SnackbarAlert
+                open={alert.open}
+                message={alert.message}
+                severity={alert.severity}
+                onClose={() => setAlert({ ...alert, open: false })}
               />
-
-              <ViewSwitcher view={view} onChange={setView} />
-
-              <CalendarView
-                key={view + interval + selectedMatrix}
-                data={volatilityData}
-                view={view}
-                onDateSelect={handleDateSelect}
-                range={range}
-                selectedDate={selectedDate}
-                selectedMatrix={selectedMatrix}
-              />
-
-              {selectedDateData && (
-                <Button
-                  onClick={handleClearSelection}
-                  variant="outlined"
-                  color="secondary"
-                  sx={{ mt: 2 }}
-                >
-                  Clear Selection
-                </Button>
-              )}
-
-              <DashboardPanel
-                realTimeData={realTimeData}
-                historicalChartData={selectedDateData}
-              />
-            </Box>
-
-            <Box mt={4}>
-              <Typography variant="h6" gutterBottom>
-                Compare Time Periods
-              </Typography>
-              <Grid container spacing={4}>
-                <Grid item xs={12} md={4}>
-                  <DateRangeSelector
-                    label="Range 1"
-                    range={comparisonRanges.range1}
-                    onChange={(k, v) =>
-                      setComparisonRanges((prev) => ({
-                        ...prev,
-                        range1: { ...prev.range1, [k]: v },
-                      }))
-                    }
-                  />
-                  <DateRangeSelector
-                    label="Range 2"
-                    range={comparisonRanges.range2}
-                    onChange={(k, v) =>
-                      setComparisonRanges((prev) => ({
-                        ...prev,
-                        range2: { ...prev.range2, [k]: v },
-                      }))
-                    }
-                  />
-                </Grid>
-                <Grid item xs={12} md={8} mb={6}>
-                  <ComparisonPanel
-                    data={Object.entries(historicalData).map(([d, v]) => ({
-                      date: new Date(d),
-                      ...v,
-                    }))}
-                    ranges={[
-                      {
-                        start: comparisonRanges.range1.start
-                          ? new Date(comparisonRanges.range1.start)
-                          : null,
-                        end: comparisonRanges.range1.end
-                          ? new Date(comparisonRanges.range1.end)
-                          : null,
-                      },
-                      {
-                        start: comparisonRanges.range2.start
-                          ? new Date(comparisonRanges.range2.start)
-                          : null,
-                        end: comparisonRanges.range2.end
-                          ? new Date(comparisonRanges.range2.end)
-                          : null,
-                      },
-                    ].filter((r) => r.start && r.end)}
-                  />
-                </Grid>
-              </Grid>
-            </Box>
-
-            <SnackbarAlert
-              open={alert.open}
-              message={alert.message}
-              severity={alert.severity}
-              onClose={() => setAlert({ ...alert, open: false })}
-            />
-          </motion.div>
-        </Box>
-      </Container>
+            </motion.div>
+          </Box>
+        </Container>
+      </LocalizationProvider>
     </ThemeProvider>
   );
 }
