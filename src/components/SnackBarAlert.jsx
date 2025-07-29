@@ -13,7 +13,7 @@ const SnackbarAlert = ({ open, message, onClose, severity = "info" }) => {
       autoHideDuration={4000}
       anchorOrigin={{ vertical: "top", horizontal: "right" }}
       sx={{
-        width: isMobile ? "100%" : "30%",
+        width: isMobile ? "90%" : "30%",
         maxWidth: "100vw",
         right: isMobile ? 10 : undefined,
         left: isMobile ? 10 : undefined,
